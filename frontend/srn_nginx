@@ -1,0 +1,18 @@
+server {
+	listen 8001 default_server;
+	listen [::]:8001 default_server ipv6only=on;
+
+	root /opt/web;
+	index index.html index.htm;
+
+	# Make site accessible from http://localhost/
+	server_name localhost;
+
+	location / {
+		try_files $uri $uri/ /index.html;
+	}
+
+	location /rethinkdb/ {
+    		proxy_pass  http://127.0.0.1:8080/;
+	}
+}

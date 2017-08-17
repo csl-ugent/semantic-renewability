@@ -1,0 +1,5 @@
+{{
+"annotation content": "protection(code_mobility,status(mobile), from_function_begin)",
+"annotation type": "code",
+"function name": "{function}"
+}}

@@ -1,0 +1,14 @@
+{
+  "name": "date.js",
+  "homepage": "https://github.com/datejs/Datejs",
+  "_release": "27a3d977e2",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "27a3d977e281d7a1a390a864188e11030958f157"
+  },
+  "_source": "https://github.com/datejs/Datejs.git",
+  "_target": "*",
+  "_originalSource": "date.js",
+  "_direct": true
+}
