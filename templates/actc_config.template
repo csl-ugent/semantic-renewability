@@ -1,4 +1,4 @@
-// ACTC 2.4.1
+// ACTC 2.8.0
 //
 // Note:
 // - "excluded": true/false [false]
@@ -35,6 +35,9 @@
     "codeguard":              "/opt/codeguard/codeguard.py",
     "anti_cloning":           "/opt/anti_cloning/annotation/replace.sh",
     "attestator_selector":    "/opt/RA/attestator_selector.sh",
+    "reaction_unit":          "NOT_HERE",
+    "dcl":                    "NOT_HERE",
+    "cft":                    "NOT_HERE",
     // src2bin
     //"frontend":               "/opt/diablo-gcc-toolchain/bin/arm-diablo-linux-gnueabi-gcc",
     "frontend":               "/opt/diablo-llvm-toolchain/bin/clang",
@@ -45,8 +48,9 @@
     "accl":                   "/opt/ACCL",
     "ascl":                   "/opt/ASCL",
     "anti_debugging":         "/opt/anti_debugging",
-    "obfuscator":             "/home/aspire/aspire/diablo/build/diablo-obfuscator",
-    "obfuscator_sp":          "/opt/diablo/bin/diablo-selfprofiling"
+    "obfuscator":             "/opt/diablo/diablo-obfuscator",
+    "obfuscator_sp":          "/opt/diablo/diablo-selfprofiling",
+    "renewability":           "/opt/renewability"
   }},
 
   // Source-level Tool chain
@@ -55,40 +59,17 @@
 
     // Source code annotation
     "SLP01": {{
-      "excluded": false,
+      "excluded":               false,
+      "traverse":               false,
+      "annotations_patch":      "",
+      "external_annotations":   "",
       "source"  : [{source_code}]
     }},
 
     // white-box crypto
     "SLP03": {{
       "excluded": false,
-      "traverse": false,
-
-      // WBC annotation extraction tool
-      "_01": {{
-        "excluded": false
-      }},
-
-      // White-Box Tool python
-      "_02": {{
-        "excluded": false
-      }},
-
-      // WBC header inclusion
-      "_03": {{
-        "excluded": false
-      }},
-
-      // preprocessor
-      "_04": {{
-        "excluded": false
-      }},
-
-      // WBC source rewriting tool
-      "_05": {{
-        "excluded": false,
-        "options":  ["-size 2000MB"]
-      }}
+      "traverse": true
     }},
 
     // preprocessor
@@ -99,41 +80,13 @@
     // data hiding
     "SLP05": {{
       "excluded": false,
-      "traverse": false,
-
-      // source code analysis
-      "_01": {{
-        "excluded": false,
-        "options" : []
-      }},
-
-      // data obfuscation
-      "_02": {{
-        "excluded": false,
-        "options" : []
-      }}
+      "traverse": true
     }},
 
     // client server clode splitting
     "SLP06": {{
       "excluded": false,
-      "traverse": false,
-
-      // Process
-      "_01": {{
-        "excluded": false,
-        "options" : []
-      }},
-
-      // CSurf
-      "_02": {{
-        "excluded": false
-      }},
-
-      // Code transformation
-      "_03": {{
-        "excluded": false
-      }}
+      "traverse": true
     }},
 
     // annotation extraction + external annotation file(s)
@@ -146,22 +99,43 @@
     // code guard
     "SLP08": {{
       "excluded": false,
-      "traverse": false,
+      "traverse": true,
       "options" : []
     }},
 
     // anti-cloning
     "SLP09": {{
       "excluded": false,
-      "traverse": false,
+      "traverse": true,
       "options" : []
     }},
 
     // remote attestation
     "SLP07": {{
-      "excluded": false,
+      "excluded": true,
       "options" : []
-	}}    
+	}},
+
+    // reaction unit
+    "SLP10": {{
+      "excluded": false,
+      "traverse": true,
+      "options" : []
+    }},
+
+    // diversified crypto library
+    "SLP11": {{
+      "excluded": false,
+      "traverse": true,
+      "options" : []
+    }},
+
+    // control flow tagging
+    "SLP12": {{
+      "excluded": false,
+      "traverse": true,
+      "options" : []
+    }}
    }},
 
   // Assembler, Compiler, Linker
@@ -212,7 +186,8 @@
     "COMPILE_ACCL": {{
       "protocol"    : "http",
       "endpoint"    : "192.168.168.192",
-      "port"        : "8088"
+      "port"        : "8088",
+      "file_path"   : ""
     }},
 
     // Linker
@@ -239,17 +214,19 @@
   "bin2bin": {{
     "excluded": false,
 
+    // bytecode diversity seed, integer or RANDOM
+    "bytecode_diversity_seed"     : "0",
+    "code_mobility_diversity_seed": "0",
+
     // vanilla self-profiling
     "BLP00": {{
-      "excluded": false,
+      "excluded": true,
 
 
       // generate vanilla self-profiling binary
       "_01": {{
         "excluded": false,
-        "options" : [],
-        "android_obj" : "/opt/diablo/obj/printarm_android.o",
-        "linux_obj" : "/opt/diablo/obj/printarm_linux.o"
+        "options" : []
       }},
 
       // collect execution profile on target board
@@ -274,7 +251,7 @@
 
     // Bytecode Generation
     "BLP02": {{
-      "excluded": false,
+      "excluded": true,
       "options" : []
     }},
 
@@ -287,24 +264,31 @@
     // Binary Code Control Flow Obfuscation
     "BLP04": {{
       "excluded"        : false,
-      "options"         : ["-Of off", "-S", "-vr"]
+      "options"         : ["-Of off", "-S", "-vr"],
+      "self-profiling"  : false,
+      "runtime_profiles": false,
+      "anti_debugging"  : false,
+      "obfuscations"    : false,
+      "call_stack_check": false,
+      "softvm"          : false,
+      "code_mobility"   : true
     }},
 
     // Generate dynamic metrics using diablo obfuscator
     "BLP04_DYN": {{
-      "excluded": false,
+      "excluded": true,
 
       // collect execution profile on target board
       "_01": {{
         "excluded": false,
-        "options" : ""
+        "options" : "",
+        "script" : "/projects/actc-demos/bzip2-1.0.6/actc/create_profile_on_board.sh"
       }},
 
       // recompile using execution profile and calculate dynamic metrics
       "_02": {{
         "excluded": true,
-        "options" : "",
-		"script" : ""
+        "options" : ""
       }}
     }}
   }},
@@ -325,7 +309,16 @@
 
     // Remote Attestation
     "P80": {{
-      "script": ""}}
+      "script": ""}},
+
+    // Renewability
+    "RENEWABILITY": {{
+      "excluded"              : false,
+      "new_application_script": "/opt/renewability/scripts/create_new_application.sh",
+      "set_policy_script"     : "/opt/renewability/scripts/set_application_policy.sh",
+      "revision_duration"     : "5",
+      "timeout_mandatory"     : false
+    }}
 	}},
 
   // Metric collection
@@ -337,6 +330,7 @@
         "BC02_DYN"         : ["*.dynamic_complexity_info"],
         "BC05"             : ["*.stat_complexity_info",
                            "*.stat_regions_complexity_info"],
+        "BC05/profiles"    : ["*.plaintext"],
         "BC05_DYN"         : ["*.dynamic_complexity_info"]
     }}
   }},
