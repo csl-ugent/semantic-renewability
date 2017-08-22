@@ -3,12 +3,12 @@ import logging
 import shutil
 import configparser
 import json
+import subprocess
 
 import core.file as file
 import core.parser as parser
 import core.func_sections as func_sections
 import core.templates as templates
-import core.script as script
 import core.rethinkdb as rethinkdb
 
 import core.tools.semantic_mod as semantic_mod
@@ -134,16 +134,12 @@ class Executor:
         actc_ = actc.ACTC(self.config.actc['bin_location'])
 
         # We create an instantiation of the rethinkdb.
-        rethinkdb_ = rethinkdb.RethinkDB(self.config.rethinkdb['host'],
+        self.rethinkdb_ = rethinkdb.RethinkDB(self.config.rethinkdb['host'],
                                          self.config.rethinkdb['port'],
                                          self.config.rethinkdb['database'])
 
-        # We set up the testing environment.
-        testing_directory = os.path.join(self.config.default['output_directory'], 'testing')
-        os.makedirs(os.path.join(testing_directory), exist_ok=True)
-
         # We create a new entry in the 'experiments' table of the rethinkdb.
-        experiment_id = rethinkdb_.add_experiment(self.config.rethinkdb['table_experiments'])
+        experiment_id = self.rethinkdb_.add_experiment(self.config.rethinkdb['table_experiments'])
         logging.debug("Experiment id: " + experiment_id)
 
         # We create a dictionary with important analytics information.
@@ -216,7 +212,7 @@ class Executor:
                                                                 ".sections")
 
             # We read the generated transformation.json file and add the information to the rethinkdb.
-            transformation_id = rethinkdb_.add_transformation(self.config.rethinkdb['table_transformations'],
+            transformation_id = self.rethinkdb_.add_transformation(self.config.rethinkdb['table_transformations'],
                                                               experiment_id,
                                                               version,
                                                               file.read_json(os.path.join(version_information[version]
@@ -418,7 +414,7 @@ class Executor:
         logging.debug("Sections which are different: " + str(functions_sections_diff))
 
         # Store the analytics information into the rethinkdb.
-        rethinkdb_.add_analytics(self.config.rethinkdb['table_analytics'], experiment_id, analytics)
+        self.rethinkdb_.add_analytics(self.config.rethinkdb['table_analytics'], experiment_id, analytics)
 
         # If in testmode we will stop execution here
         # and output the result as a json file as well.
@@ -483,44 +479,38 @@ class Executor:
                 logging.debug("ACTC didn't work... retrying one time...")
                 actc_.execute(self.config.actc['base_flags'], actc_path, 'build')
 
-        # First we clear arndale testing directory.
-        script.execute_scripts("arndale_clear.sh", ["arndale_external"])
+        # Test the versions
+        self.test(generated_versions, experiment_id)
 
-        # We transfer the testing framework and config file.
-        script.execute_scripts("transfer_arndale_testing_framework.sh",
-                               [os.path.abspath(os.path.join('transferable', 'testing', 'test.py')),
-                                self.config.testing['input_output'],
-                                "arndale_external"])
+    def test(self, generated_versions, experiment_id):
+        # We set up the testing environment locally
+        testing_directory = os.path.join(self.config.default['output_directory'], 'testing')
+        os.makedirs(testing_directory, exist_ok=True)
 
-        # We will now try to deploy all of the versions and corresponding mobile blocks to arndale.
+        # Then set it up remotely
+        testing_dir = 'testing'
+        test_host = self.config.testing['host']
+        logging.debug('Initializing board.')
+        subprocess.check_call([os.path.join(testing_dir, 'initialize_board.sh'), test_host, self.config.testing['input_output']])
+
+        # We will now try to deploy all of the versions and corresponding mobile blocks to the testing board.
         for version_one in generated_versions:
             for version_two in generated_versions:
-
                 # We generate the paths for both the first and the second version.
-                version_one_path = os.path.join(self.config.default['output_directory'],
-                                                'actc', 'build', 'aspire_' + version_one)
-                version_two_path = os.path.join(self.config.default['output_directory'],
-                                                'actc', 'build', 'aspire_' + version_two)
+                version_one_path = os.path.join(self.config.default['output_directory'], 'actc', 'build', 'aspire_' + version_one)
+                version_two_path = os.path.join(self.config.default['output_directory'], 'actc', 'build', 'aspire_' + version_two)
 
                 # Construct the version name.
                 version_name = 'E_' + version_one + '_M_' + version_two
 
-                # We execute a script to transfer the generated files to arndale.
-                script.execute_scripts("transfer_arndale_version.sh",
-                                       [version_one_path, version_two_path,
-                                        version_name,
-                                        "arndale_external"])
-
-                # We test the generated version on arndale.
-                script.execute_scripts("transfer_arndale_testing_version.sh",
-                                       [version_name, testing_directory,
-                                        "arndale_external"])
+                # We execute a script to transfer the generated files to the testing board.
+                logging.debug('Testing version ' + version_name + '.')
+                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, version_one_path, version_two_path, version_name, testing_directory])
 
                 # We add test related data to the rethinkdb.
-                test_id = rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
+                test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
                                               experiment_id,
                                               version_one,
                                               version_two,
                                               file.read_json(os.path.join(testing_directory, version_name + ".json")))
                 logging.debug("Test id: " + test_id)
-

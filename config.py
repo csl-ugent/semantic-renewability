@@ -55,6 +55,7 @@ class Config:
         # Parsing the TESTING section.
         logging.debug("Parsing the TESTING section...")
         self.testing['input_output'] = config_file.get("TESTING", "InputOutput")
+        self.testing['host'] = config_file.get("TESTING", "Host")
 
         # Parsing the SEMANTIC_MOD section.
         logging.debug("Parsing the SEMANTIC_MOD section...")

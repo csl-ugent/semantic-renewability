@@ -1,14 +1,13 @@
-import logging
-import os
+#!/usr/bin/python3
+import argparse
 import configparser
 import json
-import sys
-
-from subprocess import Popen, PIPE
+import logging
+import os
+import subprocess
 
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
-
 
 def perform_tests(testing):
 
@@ -31,18 +30,17 @@ def perform_tests(testing):
         logging.debug('Expected output: ' + str(output))
 
         # We generate the command to be executed.
-        command_exec = ['/usr/bin/time', '-f', '%e, %U, %S', './d.out'] + inputs
+        with open('stdout', 'w') as f_out, open('stderr', 'w') as f_err:
+            ret_code = subprocess.call(['/usr/bin/time', '-f', '%e, %U, %S', './d.out'] + inputs, stdout=f_out, stderr=f_err)
 
-        # We execute the command
-        ret_code, stdout, stderr = execute_command_status_output(command_exec)
-
-        # Decode output and error
-        stdout = stdout.decode("utf-8")
-        stderr = stderr.decode("utf-8")
+        with open('stdout', 'r') as f_out, open('stderr', 'r') as f_err:
+            stdout = f_out.read()
+            stderr = f_err.read()
 
         # Extract the time information line.
-        time_information = stderr.split('\n')[-2:][0].split(',')
-        errors = '\n'.join(stderr.split('\n')[:-2])
+        lines = stderr.splitlines()
+        time_information = lines[-1].split(',')
+        errors = '\n'.join(lines[:-1])
 
         # We store the return code.
         data_entry['return_code'] = ret_code
@@ -73,22 +71,7 @@ def perform_tests(testing):
         json.dump(data, f, ensure_ascii=False)
 
 
-def execute_command_status_output(command, out=PIPE):
-    logging.debug("Executing command: " + str(" ".join(command)))
-
-    # Command execution itself.
-    p = Popen(command, stdout=out if out is not None else PIPE, stderr=PIPE)
-    (stdout, stderr) = p.communicate()
-    ret_code = p.returncode
-    logging.debug("ret code: " + str(ret_code))
-    if stdout is not None:
-        logging.debug("stdout: " + stdout.decode("utf-8"))
-    if stderr is not None:
-        logging.debug("stderr: " + stderr.decode("ascii"))
-    return ret_code, stdout, stderr
-
-
-def main(config_file_path):
+def main(config_file_path, exec_dir):
     logging.debug("Executing...")
 
     # First we read the config file.
@@ -102,10 +85,9 @@ def main(config_file_path):
     # Parse the input/output pairs.
     pairs = []
     for pair in input_output:
-        parts = pair.split("],'")
-
-        inputs = [x for x in parts[0][1:].split(',')]
-        output = parts[1][:-1]
+        inputs = pair[pair.find('[') +1 : pair.find(']')]
+        inputs = inputs.split(',') if inputs else []
+        output = pair[pair.find('\'') +1:pair.rfind('\'')]
 
         pairs.append((inputs, output))
 
@@ -113,36 +95,26 @@ def main(config_file_path):
     testing['input_output'] = pairs
 
     # We start the testing flow.
+    os.chdir(exec_dir)
     perform_tests(testing)
 
 
-def _parse_args(input_args):
-    """
-    Function used to parse the arguments of this script.
-    """
-    if not len(input_args) in (2,):
-        print('Usage: python3 main.py <config_file>')
-        return
-    return sys.argv[1]
-
-# Parse the arguments.
 if __name__ == '__main__':
+    # Parsing the arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config_file', help='The config file for the testcase.')
+    parser.add_argument('exec_dir', help='The execution directory.')
+    args = parser.parse_args()
 
     # Check if DEBUG mode is on or not.
     if "DEBUG" not in os.environ.keys() or os.environ["DEBUG"] == "True":
-
         # Debug setup to stdout and log file.
         logging.basicConfig(level=logging.DEBUG)
-        logFormatter = logging.Formatter(DEBUG_FORMAT)
         rootLogger = logging.getLogger()
 
-        fileHandler = logging.FileHandler("debug.log", mode='w')
+        fileHandler = logging.FileHandler(os.path.join(args.exec_dir, 'debug.log'), mode='w')
+        logFormatter = logging.Formatter(DEBUG_FORMAT)
         fileHandler.setFormatter(logFormatter)
         rootLogger.addHandler(fileHandler)
 
-    # Start the execution.
-    args = sys.argv
-    arguments = _parse_args(args)
-    if arguments:
-        main(arguments)
-
+    main(args.config_file, args.exec_dir)
