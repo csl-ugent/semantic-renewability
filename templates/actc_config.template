@@ -48,8 +48,8 @@
     "accl":                   "/opt/ACCL",
     "ascl":                   "/opt/ASCL",
     "anti_debugging":         "/opt/anti_debugging",
-    "obfuscator":             "/opt/diablo/diablo-obfuscator",
-    "obfuscator_sp":          "/opt/diablo/diablo-selfprofiling",
+    "obfuscator":             "/opt/diablo/bin/diablo-obfuscator",
+    "obfuscator_sp":          "/opt/diablo/bin/diablo-selfprofiling",
     "renewability":           "/opt/renewability"
   }},
 
