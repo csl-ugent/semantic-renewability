@@ -7,10 +7,9 @@ import subprocess
 
 import core.file as file
 import core.parser as parser
-import core.func_sections as func_sections
+import core.sections as sections
 import core.templates as templates
 import core.rethinkdb as rethinkdb
-import core.util as util
 
 import core.tools.semantic_mod as semantic_mod
 import core.tools.arm_diablo_linux_gcc as arm_diablo_linux_gcc
@@ -128,7 +127,7 @@ class Executor:
                     for section in version_information[version_one]["section_information"][object_file][1][function]:
 
                         # We compare the specific section using the version one and version two object file.
-                        if not func_sections.compare_sections(self.elf_reader, section, section, path_obj_file_version_one,
+                        if not sections.compare(self.elf_reader, section, section, path_obj_file_version_one,
                                                               path_obj_file_version_two):
 
                             # If the sections are not equal, the functions are considered different.
@@ -429,7 +428,7 @@ class Executor:
                     for section in sect:
 
                         # We determine the function to which it corresponds.
-                        function_name = util.extract_function_name_from_section(section)
+                        function_name = sections.extract_function_name(section)
 
                         # We check if the function already exists in our dictionary.
                         if function_name not in version_information[version]["section_information"][obj_file_name][1]:

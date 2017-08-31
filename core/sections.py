@@ -1,8 +1,18 @@
 """ Module used for sections functionality. """
 import logging
+import re
 
+def extract_function_name(section):
+    """
+    Method used to extract the function name of a section name.
+    :param section: the section from which we will extract the function name.
+    :return: the function name corresponding to this section or None if not found.
+    """
+    result = re.search('[^ ]*.text.([^ \n]*)', section)
+    if result is not None:
+        return result.group(1)
 
-def dump_section(elf_reader, name_section, objectfile):
+def dump(elf_reader, name_section, objectfile):
     """
     Method used to dump a specific section within an object file.
     :param elf_reader: the ELF Reader that will be used to dump the specific section.
@@ -19,7 +29,7 @@ def dump_section(elf_reader, name_section, objectfile):
     return output
 
 
-def compare_sections(elf_reader, name_section_one, name_section_two, objfile_one, objfile_two):
+def compare(elf_reader, name_section_one, name_section_two, objfile_one, objfile_two):
     """
     Method used to compare two sections of given object files.
     :param elf_reader: the ELF reader that will be used to compare the different sections.
@@ -35,10 +45,10 @@ def compare_sections(elf_reader, name_section_one, name_section_two, objfile_one
                   name_section_two + "(" + objfile_two + ")...")
 
     # We dump the first section.
-    section_one = dump_section(elf_reader, name_section_one, objfile_one)
+    section_one = dump(elf_reader, name_section_one, objfile_one)
 
     # We dump the second section.
-    section_two = dump_section(elf_reader, name_section_two, objfile_two)
+    section_two = dump(elf_reader, name_section_two, objfile_two)
 
     # Return True if both sections are equal.
     return section_one == section_two
