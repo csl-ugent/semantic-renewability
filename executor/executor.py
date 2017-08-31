@@ -235,9 +235,9 @@ class Executor:
                                                      self.config.semantic_mod['compiler_flags'])
         extra_opts = []
         if mode == "StructReordering":
-            extra_opts = ['-sr_am', str(self.config.struct_reordering['amount'])]
+            extra_opts = ['-sr_am', str(self.config.default['nr_of_reorderings'])]
         elif mode == "FPReordering":
-            extra_opts = ['-fp_am', str(self.config.functionparam_reordering['amount'])]
+            extra_opts = ['-fp_am', str(self.config.default['nr_of_reorderings'])]
 
         semantic_mod_tool.execute_structure_reordering(self.config.default['input_source_directory'], source_files,
                                                        self.config.default['output_directory'],
@@ -248,7 +248,7 @@ class Executor:
         generated_versions = file.discover_subdirectories(self.config.default['output_directory'])
         logging.debug("Versions: " + str(generated_versions))
         logging.debug("Tool generated: " + str(len(generated_versions)) + " out of " +
-                      self.config.struct_reordering['amount'] + " requested versions.")
+                      self.config.default['nr_of_reorderings'] + " requested versions.")
 
         # We iterate over each generated version.
         for version in generated_versions:
@@ -299,11 +299,11 @@ class Executor:
             filename = ""
             if self.config.semantic_mod["type"] == "StructReordering":
                 filename = os.path.join(self.config.default['testmodedirectory'],
-                                        "struct_reordering_" + str(self.config.struct_reordering["amount"]))
+                                        "struct_reordering_" + str(self.config.default['nr_of_reorderings']))
             elif self.config.semantic_mod["type"] == "FPReordering":
                 filename = os.path.join(self.config.default['testmodedirectory'],
                                         "function_param_reordering_" +
-                                        str(self.config.functionparam_reordering["amount"]))
+                                        str(self.config.default['nr_of_reorderings']))
             with open(filename + ".json", 'w') as f:
                 data = dict()
                 data["amount_functions"] = analytics["general"]["amount_functions"]

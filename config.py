@@ -18,8 +18,6 @@ class Config:
         self.arm_diablo_linux_objdump = dict()
         self.elf_reader = dict()
         self.actc = dict()
-        self.struct_reordering = dict()
-        self.functionparam_reordering = dict()
         self.testing = dict()
 
         # We parse the given config file.
@@ -39,6 +37,7 @@ class Config:
         self.default['output_directory'] = config_file.get("DEFAULT", "OutputDirectory")
         self.default['suffix_source'] = config_file.get("DEFAULT", "SuffixSource")
         self.default['suffix_header'] = config_file.get("DEFAULT", "SuffixHeader")
+        self.default['nr_of_reorderings'] = config_file.get("DEFAULT", "NrOfReorderings")
         self.default['testmode'] = config_file.getboolean("DEFAULT", "TestMode")
         self.default['testmodedirectory'] = config_file.get("DEFAULT", "TestModeDirectory")
 
@@ -84,11 +83,3 @@ class Config:
         logging.debug("Parsing the ACTC section...")
         self.actc["bin_location"] = config_file.get("ACTC", "BinLocation")
         self.actc["base_flags"] = json.loads(config_file.get("ACTC", "BaseFlags"))
-
-        # Parsing the STRUCT_REORDERING section.
-        logging.debug("Parsing the STRUCT_REORDERING section...")
-        self.struct_reordering['amount'] = config_file.get("STRUCT_REORDERING", "AMOUNT")
-
-        # Parsing the FUNCTIONPARAM_REORDERING section.
-        logging.debug("Parsing the FUNCTIONPARAM_REORDERING section...")
-        self.functionparam_reordering['amount'] = config_file.get("FUNCTIONPARAM_REORDERING", "AMOUNT")
