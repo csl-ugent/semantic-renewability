@@ -1,8 +1,5 @@
 import logging
-
-import core.command as cmd
-import core.tools.util as util
-
+import subprocess
 
 class ARMDiabloLinuxGCC:
     """
@@ -31,8 +28,7 @@ class ARMDiabloLinuxGCC:
             flags + [source_file]
 
         # We execute the command.
-        (status, stdout, stderr) = cmd.execute_command_status_output(command_exec)
-        util.handle_status(status, stdout, stderr)
+        subprocess.check_call(command_exec)
 
     def create_object_files(self, flags, source_files, output_files=None):
         """

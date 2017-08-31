@@ -1,8 +1,5 @@
 import logging
-
-import core.command as cmd
-import core.tools.util as util
-
+import subprocess
 
 class ARMDiabloLinuxObjdump:
     """
@@ -31,12 +28,8 @@ class ARMDiabloLinuxObjdump:
         command_exec = [self.bin_location] + flags + [object_file]
 
         # Execute the disassembler.
-        file = open(output_file, 'w')
-        (status, stdout, stderr) = cmd.execute_command_status_output(command_exec, file)
-        file.close()
-
-        # Check for faulty status codes.
-        util.handle_status(status, stdout, stderr)
+        with open(output_file, 'w') as f_out:
+            subprocess.check_call(command_exec, stdout=f_out)
 
     def disassemble_obj_files(self, flags, object_files, output_files):
         """

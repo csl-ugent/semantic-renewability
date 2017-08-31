@@ -13,7 +13,7 @@ def dump_section(elf_reader, name_section, objectfile):
 
     # Dump the section from the given object file using objdump.
     flags = ['-x', name_section]
-    ret_code, output, error = elf_reader.read_file(flags, objectfile, None)
+    output = elf_reader.read_file(flags, objectfile)
 
     # Return the dump.
     return output

@@ -1,8 +1,5 @@
 import logging
-
-import core.command as cmd
-import core.tools.util as util
-
+import subprocess
 
 class ElfReader:
     """
@@ -31,18 +28,11 @@ class ElfReader:
         command_exec = [self.bin_location] + flags + [object_file]
 
         # Execute the disassembler.
-        file = None
-        if output_file is not None:
-            file = open(output_file, 'w')
-
-        (status, stdout, stderr) = cmd.execute_command_status_output(command_exec,
-                                                                     file if output_file is not None else None)
-
-        # Check for faulty status codes.
-        util.handle_status(status, stdout, stderr)
-
-        # Return relevant information.
-        return status, stdout, stderr
+        if output_file:
+            with open(output_file, 'w') as f_out:
+                subprocess.check_call(command_exec, stdout=f_out)
+        else:
+            return subprocess.check_output(command_exec)
 
     def read_files(self, flags, object_files, output_files):
         """

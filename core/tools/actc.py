@@ -1,5 +1,4 @@
-import core.command as cmd
-import core.tools.util as util
+import subprocess
 
 
 class ACTC:
@@ -26,7 +25,4 @@ class ACTC:
         command_exec = [self.bin_location] + flags + ["-f", config_file, "-d", mode]
 
         # Execute the command.
-        (status, stdout, stderr) = cmd.execute_command_status_output(command_exec)
-
-        # We return the status.
-        return status
+        subprocess.check_call(command_exec)

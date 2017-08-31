@@ -1,6 +1,4 @@
-import core.command as cmd
-import core.tools.util as util
-
+import subprocess
 
 class SemanticMod:
     """
@@ -32,5 +30,4 @@ class SemanticMod:
                        ['-od', output_directory] + extra_opts + ["--"] + self.compiler_flags
 
         # We execute the command.
-        (status, stdout, stderr) = cmd.execute_command_status_output(command_exec)
-        util.handle_status(status, stdout, stderr)
+        subprocess.check_call(command_exec)

@@ -10,13 +10,13 @@ import core.parser as parser
 import core.func_sections as func_sections
 import core.templates as templates
 import core.rethinkdb as rethinkdb
+import core.util as util
 
 import core.tools.semantic_mod as semantic_mod
 import core.tools.arm_diablo_linux_gcc as arm_diablo_linux_gcc
 import core.tools.arm_diablo_linux_objdump as arm_diablo_linux_objdump
 import core.tools.elf_reader as elf_reader
 import core.tools.actc as actc
-import core.tools.util as util
 
 
 class Executor:
@@ -488,7 +488,7 @@ class Executor:
 
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.
             actc_.execute(self.config.actc['base_flags'], actc_path, 'clean')
-            assert not actc_.execute(self.config.actc['base_flags'], actc_path, 'build'), 'ACTC failed!'
+            actc_.execute(self.config.actc['base_flags'], actc_path, 'build')
 
     def test(self, generated_versions):
         # We set up the testing environment locally
