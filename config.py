@@ -37,7 +37,7 @@ class Config:
         self.default['output_directory'] = config_file.get("DEFAULT", "OutputDirectory")
         self.default['suffix_source'] = config_file.get("DEFAULT", "SuffixSource")
         self.default['suffix_header'] = config_file.get("DEFAULT", "SuffixHeader")
-        self.default['nr_of_reorderings'] = config_file.get("DEFAULT", "NrOfReorderings")
+        self.default['nr_of_versions'] = config_file.get("DEFAULT", "NrOfVersions")
         self.default['testmode'] = config_file.getboolean("DEFAULT", "TestMode")
         self.default['testmodedirectory'] = config_file.get("DEFAULT", "TestModeDirectory")
 

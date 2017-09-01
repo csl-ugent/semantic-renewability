@@ -31,12 +31,12 @@ def main(test_versions):
         logging.debug('Testing mode activated!')
 
         # Convert the option into a list of numbers
-        numbers = [x for x in config_obj.default['nr_of_reorderings'].split(',')]
+        numbers = [x for x in config_obj.default['nr_of_versions'].split(',')]
 
         # For every item we will execute an executor flow.
         for number in numbers:
-            # We set the number of reorderings
-            config_obj.default['nr_of_reorderings'] = numbers
+            # We set the number of versions
+            config_obj.default['nr_of_versions'] = numbers
 
             # We create an executor to start the semantic renewability flow.
             executor_flow = executor.Executor(config_obj)

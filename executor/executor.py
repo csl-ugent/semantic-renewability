@@ -235,9 +235,9 @@ class Executor:
                                                      self.config.semantic_mod['compiler_flags'])
         extra_opts = []
         if mode == "StructReordering":
-            extra_opts = ['-sr_am', str(self.config.default['nr_of_reorderings'])]
+            extra_opts = ['-sr_am', str(self.config.default['nr_of_versions'])]
         elif mode == "FPReordering":
-            extra_opts = ['-fp_am', str(self.config.default['nr_of_reorderings'])]
+            extra_opts = ['-fp_am', str(self.config.default['nr_of_versions'])]
 
         semantic_mod_tool.execute_structure_reordering(self.config.default['input_source_directory'], source_files,
                                                        self.config.default['output_directory'],
@@ -248,7 +248,7 @@ class Executor:
         generated_versions = file.discover_subdirectories(self.config.default['output_directory'])
         logging.debug("Versions: " + str(generated_versions))
         logging.debug("Tool generated: " + str(len(generated_versions)) + " out of " +
-                      self.config.default['nr_of_reorderings'] + " requested versions.")
+                      self.config.default['nr_of_versions'] + " requested versions.")
 
         # We iterate over each generated version.
         for version in generated_versions:
@@ -295,7 +295,7 @@ class Executor:
         # and output the result as a json file as well.
         if self.config.default['testmode']:
             # Construct file name
-            filename = self.config.semantic_mod['type'] + '_' + str(self.config.default['nr_of_reorderings']) + '.json'
+            filename = self.config.semantic_mod['type'] + '_' + str(self.config.default['nr_of_versions']) + '.json'
 
             # Dump
             with open(os.path.join(self.config.default['testmodedirectory'], filename), 'w') as f:
