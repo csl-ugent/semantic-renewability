@@ -1,22 +1,20 @@
-import os
-import logging
-import shutil
-import configparser
 import json
+import logging
+import os
+import shutil
 import subprocess
 
 import core.file as file
 import core.parser as parser
+import core.rethinkdb as rethinkdb
 import core.sections as sections
 import core.templates as templates
-import core.rethinkdb as rethinkdb
 
-import core.tools.semantic_mod as semantic_mod
+import core.tools.actc as actc
 import core.tools.arm_diablo_linux_gcc as arm_diablo_linux_gcc
 import core.tools.arm_diablo_linux_objdump as arm_diablo_linux_objdump
 import core.tools.elf_reader as elf_reader
-import core.tools.actc as actc
-
+import core.tools.semantic_mod as semantic_mod
 
 class Executor:
     """
