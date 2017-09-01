@@ -18,7 +18,6 @@ class Config:
         self.arm_diablo_linux_objdump = dict()
         self.elf_reader = dict()
         self.actc = dict()
-        self.testing = dict()
 
         # We parse the given config file.
         self.parse_config(config_file)
