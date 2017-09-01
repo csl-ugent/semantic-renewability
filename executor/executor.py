@@ -309,7 +309,8 @@ class Executor:
         self.run_actc(generated_versions, version_information, functions_diff)
 
         # Test the versions
-        self.test(generated_versions)
+        if self.config.default['test_versions']:
+            self.test(generated_versions)
 
     def gather_version_information(self, generated_versions):
         # We build a dictionary containing all relevant information of the current version.

@@ -4,6 +4,7 @@
 Module which is the main entry point.
 """
 
+import argparse
 import config
 import configparser
 import logging
@@ -14,13 +15,16 @@ import executor.executor as executor
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
-def main():
+def main(test_versions):
     logging.debug('Executing...')
 
     # First we read and parse the config file.
     config_file = configparser.ConfigParser()
     config_file.read('config.ini')
     config_obj = config.Config(config_file)
+
+    # Add extra options
+    config_obj.default['test_versions'] = test_versions
 
     # Special testing mode for multiple executions.
     if config_obj.default['testmode']:
@@ -45,10 +49,14 @@ def main():
 
 # Parse the arguments.
 if __name__ == '__main__':
+    # Parsing the arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debugging log.')
+    parser.add_argument('-t', '--test', action='store_true', help='Also test the protected binaries with the testing framework provided.')
+    args = parser.parse_args()
 
     # Check if DEBUG mode is on or not.
-    if 'DEBUG' not in os.environ.keys() or os.environ['DEBUG'] == 'True':
-
+    if args.debug:
         # Debug setup to stdout and log file.
         logging.basicConfig(level=logging.DEBUG)
         logFormatter = logging.Formatter(DEBUG_FORMAT)
@@ -59,4 +67,4 @@ if __name__ == '__main__':
         rootLogger.addHandler(fileHandler)
 
     # Start the execution.
-    main()
+    main(args.test)
