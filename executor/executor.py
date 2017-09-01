@@ -293,18 +293,12 @@ class Executor:
 
         # If in testmode we will stop execution here
         # and output the result as a json file as well.
-        if self.config.default["testmode"] is True:
+        if self.config.default['testmode']:
+            # Construct file name
+            filename = self.config.semantic_mod['type'] + '_' + str(self.config.default['nr_of_reorderings']) + '.json'
 
-            # Construct file name path.
-            filename = ""
-            if self.config.semantic_mod["type"] == "StructReordering":
-                filename = os.path.join(self.config.default['testmodedirectory'],
-                                        "struct_reordering_" + str(self.config.default['nr_of_reorderings']))
-            elif self.config.semantic_mod["type"] == "FPReordering":
-                filename = os.path.join(self.config.default['testmodedirectory'],
-                                        "function_param_reordering_" +
-                                        str(self.config.default['nr_of_reorderings']))
-            with open(filename + ".json", 'w') as f:
+            # Dump
+            with open(os.path.join(self.config.default['testmodedirectory'], filename), 'w') as f:
                 data = dict()
                 data["amount_functions"] = analytics["general"]["amount_functions"]
                 data["amount_mobile"] = analytics["general"]["amount_mobile"]
