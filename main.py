@@ -9,13 +9,14 @@ import config
 import configparser
 import logging
 import os
+import shutil
 
 import executor.executor as executor
 
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
-def main(test_versions):
+def main(mode):
     logging.debug('Executing...')
 
     # First we read and parse the config file.
@@ -23,36 +24,31 @@ def main(test_versions):
     config_file.read('config.ini')
     config_obj = config.Config(config_file)
 
-    # Add extra options
-    config_obj.default['test_versions'] = test_versions
+    # Conver the nr_of_versions option into a list of numbers
+    numbers = [x for x in config_obj.default['nr_of_versions'].split(',')]
 
-    # Special testing mode for multiple executions.
-    if config_obj.default['testmode']:
-        logging.debug('Testing mode activated!')
+    # For every item we will execute an executor flow.
+    output_dir_config = config_obj.default['output_directory']
+    for number in numbers:
+        # We set the number of versions
+        config_obj.default['nr_of_versions'] = number
 
-        # Convert the option into a list of numbers
-        numbers = [x for x in config_obj.default['nr_of_versions'].split(',')]
+        # Set and create the output directory
+        output_dir = output_dir_config if len(numbers) == 1 else os.path.join(output_dir_config, str(number))
+        config_obj.default['output_directory'] = output_dir
+        shutil.rmtree(output_dir, True)
+        os.makedirs(output_dir)
 
-        # For every item we will execute an executor flow.
-        for number in numbers:
-            # We set the number of versions
-            config_obj.default['nr_of_versions'] = numbers
-
-            # We create an executor to start the semantic renewability flow.
-            executor_flow = executor.Executor(config_obj)
-            executor_flow.execute()
-
-    else:
         # We create an executor to start the semantic renewability flow.
         executor_flow = executor.Executor(config_obj)
-        executor_flow.execute()
+        executor_flow.execute(mode)
 
 # Parse the arguments.
 if __name__ == '__main__':
     # Parsing the arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debugging log.')
-    parser.add_argument('-t', '--test', action='store_true', help='Also test the protected binaries with the testing framework provided.')
+    parser.add_argument('-m', '--mode', type=int, default=2, help='The test mode that is to be executed. 0 is none.')
     args = parser.parse_args()
 
     # Check if DEBUG mode is on or not.
@@ -67,4 +63,4 @@ if __name__ == '__main__':
         rootLogger.addHandler(fileHandler)
 
     # Start the execution.
-    main(args.test)
+    main(args.mode)

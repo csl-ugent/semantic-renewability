@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import shutil
 import subprocess
 
 import core.file as file
@@ -208,14 +207,6 @@ class Executor:
         source_files = file.filter_directory_structure(directory_structure_input,
                                                        [self.config.default['suffix_source']])
 
-        # We make sure the output directory is empty.
-        try:
-            shutil.rmtree(self.config.default['output_directory'])
-        except FileNotFoundError:
-            # We can safely ignore the file not found error: the directory simply does not exist yet
-            # and should be created by the 'semantic_mod' tool.
-            pass
-
         # Return a tuple of generated relevant information.
         return directory_structure_input, source_files
 
@@ -267,7 +258,7 @@ class Executor:
         # We return a list of generated versions in the output directory.
         return generated_versions
 
-    def execute(self):
+    def execute(self, mode):
         """
         Method used to start the execution of the main flow.
         :return: nothing.
@@ -289,25 +280,25 @@ class Executor:
         # Do some analysis and find those functions that differ
         (analytics, functions_diff) = self.analyze(source_files, generated_versions, version_information)
 
-        # If in testmode we will stop execution here
-        # and output the result as a json file as well.
-        if self.config.default['testmode']:
-            # Construct file name
-            filename = self.config.semantic_mod['type'] + '_' + str(self.config.default['nr_of_versions']) + '.json'
-
+        # In this mode we will stop execution here and output the result as a json file as well.
+        if mode == 0:
             # Dump
-            with open(os.path.join(self.config.default['testmodedirectory'], filename), 'w') as f:
+            with open(os.path.join(self.config.default['output_directory'], 'result.json'), 'w') as f:
                 data = dict()
                 data["amount_functions"] = analytics["general"]["amount_functions"]
                 data["amount_mobile"] = analytics["general"]["amount_mobile"]
                 json.dump(data, f, ensure_ascii=False)
-            return
 
-        # Run ACTC on versions
-        self.run_actc(generated_versions, version_information, functions_diff)
+        # In this mode we run the ACTC on the rewritten source code, without code mobility.
+        elif mode == 1:
+            self.run_actc(generated_versions, version_information, set())
 
-        # Test the versions
-        if self.config.default['test_versions']:
+        # In this mode we run the ACTC on the rewritten source code, **with** code mobility.
+        elif mode == 2:
+            self.run_actc(generated_versions, version_information, functions_diff)
+
+        # If we are in a mode where binaries are actually created, we can test them.
+        if mode:
             self.test(generated_versions)
 
     def gather_version_information(self, generated_versions):

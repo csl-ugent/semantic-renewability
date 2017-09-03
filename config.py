@@ -37,8 +37,6 @@ class Config:
         self.default['suffix_source'] = config_file.get("DEFAULT", "SuffixSource")
         self.default['suffix_header'] = config_file.get("DEFAULT", "SuffixHeader")
         self.default['nr_of_versions'] = config_file.get("DEFAULT", "NrOfVersions")
-        self.default['testmode'] = config_file.getboolean("DEFAULT", "TestMode")
-        self.default['testmodedirectory'] = config_file.get("DEFAULT", "TestModeDirectory")
 
         # Parsing the RETHINKDB section.
         logging.debug("Parsing the RETHINKDB section...")
