@@ -190,7 +190,7 @@ class Executor:
         logging.debug("Functions considered different: " + str(functions_diff))
         logging.debug("Sections which are different: " + str(functions_sections_diff))
 
-        return functions_diff
+        return (analytics, functions_diff)
 
     def execute_directory_pre(self):
         """
@@ -287,7 +287,7 @@ class Executor:
         version_information = self.gather_version_information(generated_versions)
 
         # Do some analysis and find those functions that differ
-        functions_diff = self.analyze(source_files, generated_versions, version_information)
+        (analytics, functions_diff) = self.analyze(source_files, generated_versions, version_information)
 
         # If in testmode we will stop execution here
         # and output the result as a json file as well.
