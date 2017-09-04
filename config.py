@@ -53,6 +53,7 @@ class Config:
         logging.debug("Parsing the TESTING section...")
         self.testing['input_output'] = config_file.get("TESTING", "InputOutput")
         self.testing['host'] = config_file.get("TESTING", "Host")
+        self.testing['regression_dir'] = config_file.get("TESTING", "RegressionDir")
 
         # Parsing the SEMANTIC_MOD section.
         logging.debug("Parsing the SEMANTIC_MOD section...")

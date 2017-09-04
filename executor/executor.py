@@ -7,6 +7,7 @@ import core.file as file
 import core.parser as parser
 import core.rethinkdb as rethinkdb
 import core.sections as sections
+import core.spec as spec
 import core.templates as templates
 
 import core.tools.actc as actc
@@ -262,7 +263,7 @@ class Executor:
         # We return a list of generated versions in the output directory.
         return generated_versions
 
-    def execute(self, mode):
+    def execute(self, mode, testmode):
         """
         Method used to start the execution of the main flow.
         :return: nothing.
@@ -302,8 +303,8 @@ class Executor:
             self.run_actc(generated_versions, version_information, functions_diff)
 
         # If we are in a mode where binaries are actually created, we can test them.
-        if mode:
-            self.test(generated_versions)
+        if mode and testmode:
+            self.test(generated_versions, testmode)
 
     def gather_version_information(self, generated_versions):
         # We build a dictionary containing all relevant information of the current version.
@@ -475,16 +476,23 @@ class Executor:
             self.actc_.execute(actc_config, 'clean')
             self.actc_.execute(actc_config, 'build')
 
-    def test(self, generated_versions):
+    def test(self, generated_versions, mode):
         # We set up the testing environment locally
         testing_directory = os.path.join(self.config.default['output_directory'], 'testing')
         os.makedirs(testing_directory, exist_ok=True)
 
-        # Then set it up remotely
-        testing_dir = 'testing'
-        test_host = self.config.testing['host']
-        logging.debug('Initializing board.')
-        subprocess.check_call([os.path.join(testing_dir, 'initialize_board.sh'), test_host, self.config.testing['input_output']])
+        # Do the testing using our own framework
+        if mode == 1:
+            logging.debug('Testing using our own scripts.')
+
+            # Set the testing environment up remotely
+            testing_dir = 'testing'
+            test_host = self.config.testing['host']
+            logging.debug('Initializing board.')
+            subprocess.check_call([os.path.join(testing_dir, 'initialize_board.sh'), test_host, self.config.testing['input_output']])
+        # Do the testing using the SPEC framework
+        elif mode == 2:
+            logging.debug('Testing using the SPEC scripts.')
 
         # We will now try to deploy all of the versions and corresponding mobile blocks to the testing board.
         for version_one in generated_versions:
@@ -495,18 +503,23 @@ class Executor:
 
                 # Construct the version name.
                 version_name = 'E_' + version_one + '_M_' + version_two
+                logging.debug('Testing version ' + version_name + '.')
 
                 # Redeploy code mobility to switch blocks (the -i and -p options do not actually matter)
                 subprocess.check_call([self.config.actc['deploy_mobility_script'], '-a', self.config.actc['aid'], '-p', '20', '-i', 'localhost', mobile_blocks_dir], stdout=subprocess.DEVNULL)
 
-                # We execute a script to transfer the generated files to the testing board.
-                logging.debug('Testing version ' + version_name + '.')
-                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version_name, testing_directory])
+                # Do the actual test, using either our own script or the SPEC functionality
+                if mode == 1:
+                    subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version_name, testing_directory])
+                elif mode == 2:
+                    test_dir = os.path.join(testing_directory, version_name)
+                    os.makedirs(test_dir)
+                    spec.test(os.path.join(binary_dir, self.config.default['binary_name']), test_dir, self.config)
 
                 # We add test related data to the rethinkdb.
                 test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
                                               self.experiment_id,
                                               version_one,
                                               version_two,
-                                              file.read_json(os.path.join(testing_directory, version_name + ".json")))
+                                              file.read_json(os.path.join(testing_directory, version_name + ".json")) if mode == 1 else None)
                 logging.debug("Test id: " + test_id)
