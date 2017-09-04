@@ -465,8 +465,9 @@ class Executor:
 
             # ACTC configuration file generation (based on a predefined template).
             templates.read_template_and_fill('actc_config.template',
-                                             {'source_code': src_header_files_input,
-                                              'annotations': annotations_path},
+                                        {'binary_name': self.config.default['binary_name'],
+                                            'source_code': src_header_files_input,
+                                            'annotations': annotations_path},
                                              actc_path)
 
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.

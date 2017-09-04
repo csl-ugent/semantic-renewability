@@ -32,6 +32,7 @@ class Config:
 
         # Parsing the DEFAULT section.
         logging.debug("Parsing the DEFAULT section...")
+        self.default['binary_name'] = config_file.get("DEFAULT", "BinaryName")
         self.default['input_source_directory'] = config_file.get("DEFAULT", "InputSourceDirectory")
         self.default['output_directory'] = config_file.get("DEFAULT", "OutputDirectory")
         self.default['suffix_source'] = config_file.get("DEFAULT", "SuffixSource")

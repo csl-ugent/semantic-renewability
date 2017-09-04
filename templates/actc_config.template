@@ -206,7 +206,7 @@
       // basename of linked file
       //   if empty, default value computed from options:
       //   "liba.so" if "-shared" else "a.out"
-      "binary"     : ""
+      "binary"     : "{binary_name}"
     }}
   }},
 
