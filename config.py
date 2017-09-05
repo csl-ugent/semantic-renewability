@@ -79,5 +79,6 @@ class Config:
 
         # Parsing the ACTC section.
         logging.debug("Parsing the ACTC section...")
+        self.actc["aid"] = config_file.get("ACTC", "AID")
         self.actc["bin_location"] = config_file.get("ACTC", "BinLocation")
-        self.actc["base_flags"] = json.loads(config_file.get("ACTC", "BaseFlags"))
+        self.actc["deploy_mobility_script"] = config_file.get("ACTC", "DeployMobilityScript")

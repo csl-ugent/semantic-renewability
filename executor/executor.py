@@ -41,6 +41,10 @@ class Executor:
         # We create an instantiation of the ELF reader tool.
         self.elf_reader = elf_reader.ElfReader(self.config.elf_reader['bin_location'])
 
+        # We create an instantiation of the ACTC tool chain.
+        actc_path = os.path.join(self.config.default['output_directory'], 'actc')
+        self.actc_ = actc.ACTC(self.config.actc['bin_location'], self.config.actc, actc_path)
+
     def analyze(self, source_files, generated_versions, version_information):
         # We create a dictionary with important analytics information.
         analytics = dict()
@@ -432,11 +436,8 @@ class Executor:
         return version_information
 
     def run_actc(self, generated_versions, version_information, functions_diff):
-        # We create an instantiation of the ACTC tool chain.
-        actc_ = actc.ACTC(self.config.actc['bin_location'])
-
         # The directory in which annotations will be stored.
-        annotations_path = os.path.join(self.config.default['output_directory'], 'actc', "annotations.out")
+        annotations_path = os.path.join(self.actc_.path, 'annotations.out')
 
         # We generate annotations for the functions which have to be made mobile (using a predefined template).
         logging.debug("Creating mobile block annotations...")
@@ -452,8 +453,8 @@ class Executor:
         # We will generate ACTC config files for each of the generated versions.
         for version in generated_versions:
 
-            actc_path = os.path.join(self.config.default['output_directory'], 'actc', 'aspire_' + version + '.json')
-            version_information[version]["actc_config"] = actc_path
+            actc_config = os.path.join(self.actc_.path, version + '.json')
+            version_information[version]['actc_config'] = actc_config
 
             # We need to convert our directory structure to a list of source and header files.
             src_header_files = file.filter_directory_structure(version_information[version]["directory_structure"],
@@ -468,11 +469,11 @@ class Executor:
                                         {'binary_name': self.config.default['binary_name'],
                                             'source_code': src_header_files_input,
                                             'annotations': annotations_path},
-                                             actc_path)
+                                             actc_config)
 
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.
-            actc_.execute(self.config.actc['base_flags'], actc_path, 'clean')
-            actc_.execute(self.config.actc['base_flags'], actc_path, 'build')
+            self.actc_.execute(actc_config, 'clean')
+            self.actc_.execute(actc_config, 'build')
 
     def test(self, generated_versions):
         # We set up the testing environment locally
@@ -488,16 +489,19 @@ class Executor:
         # We will now try to deploy all of the versions and corresponding mobile blocks to the testing board.
         for version_one in generated_versions:
             for version_two in generated_versions:
-                # We generate the paths for both the first and the second version.
-                version_one_path = os.path.join(self.config.default['output_directory'], 'actc', 'build', 'aspire_' + version_one)
-                version_two_path = os.path.join(self.config.default['output_directory'], 'actc', 'build', 'aspire_' + version_two)
+                # We generate the paths for the binary and the mobile blocks (which can be from different versions).
+                binary_dir = self.actc_.get_output_dir(version_one)
+                mobile_blocks_dir = self.actc_.get_mobile_blocks_dir(version_two)
 
                 # Construct the version name.
                 version_name = 'E_' + version_one + '_M_' + version_two
 
+                # Redeploy code mobility to switch blocks (the -i and -p options do not actually matter)
+                subprocess.check_call([self.config.actc['deploy_mobility_script'], '-a', self.config.actc['aid'], '-p', '20', '-i', 'localhost', mobile_blocks_dir], stdout=subprocess.DEVNULL)
+
                 # We execute a script to transfer the generated files to the testing board.
                 logging.debug('Testing version ' + version_name + '.')
-                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, version_one_path, version_two_path, version_name, testing_directory])
+                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version_name, testing_directory])
 
                 # We add test related data to the rethinkdb.
                 test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
