@@ -499,31 +499,28 @@ class Executor:
             logging.debug('Testing using the SPEC scripts.')
 
         # We will now try to deploy all of the versions and corresponding mobile blocks to the testing board.
-        for version_one in generated_versions:
-            for version_two in generated_versions:
-                # We generate the paths for the binary and the mobile blocks (which can be from different versions).
-                binary_dir = self.actc_.get_output_dir(version_one)
-                mobile_blocks_dir = self.actc_.get_mobile_blocks_dir(version_two)
+        for version in generated_versions:
+            # We generate the paths for the binary and the mobile blocks (which can be from different versions).
+            binary_dir = self.actc_.get_output_dir(version)
+            mobile_blocks_dir = self.actc_.get_mobile_blocks_dir(version)
+            logging.debug('Testing version ' + version + '.')
 
-                # Construct the version name.
-                version_name = 'E_' + version_one + '_M_' + version_two
-                logging.debug('Testing version ' + version_name + '.')
-
+            # If no blocks were generated, we can't deploy CM
+            if os.path.exists(mobile_blocks_dir):
                 # Redeploy code mobility to switch blocks (the -i and -p options do not actually matter)
                 subprocess.check_call([self.config.actc['deploy_mobility_script'], '-a', self.config.actc['aid'], '-p', '20', '-i', 'localhost', mobile_blocks_dir], stdout=subprocess.DEVNULL)
 
-                # Do the actual test, using either our own script or the SPEC functionality
-                if mode == 1:
-                    subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version_name, testing_directory])
-                elif mode == 2:
-                    test_dir = os.path.join(testing_directory, version_name)
-                    os.makedirs(test_dir)
-                    spec.test(os.path.join(binary_dir, self.config.default['binary_name']), test_dir, self.config)
+            # Do the actual test, using either our own script or the SPEC functionality
+            if mode == 1:
+                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version, testing_directory])
+            elif mode == 2:
+                test_dir = os.path.join(testing_directory, version)
+                os.makedirs(test_dir)
+                spec.test(os.path.join(binary_dir, self.config.default['binary_name']), test_dir, self.config)
 
-                # We add test related data to the rethinkdb.
-                test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
-                                              self.experiment_id,
-                                              version_one,
-                                              version_two,
-                                              file.read_json(os.path.join(testing_directory, version_name + ".json")) if mode == 1 else None)
-                logging.debug("Test id: " + test_id)
+            # We add test related data to the rethinkdb.
+            test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
+                                          self.experiment_id,
+                                          version,
+                                          file.read_json(os.path.join(testing_directory, version + ".json")) if mode == 1 else None)
+            logging.debug("Test id: " + test_id)

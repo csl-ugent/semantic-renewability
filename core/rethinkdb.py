@@ -62,7 +62,7 @@ class RethinkDB:
                                   'version_name': version_name,
                                   'transformation': transformation})
 
-    def add_test(self, table_tests, experiment_id, base_version, mobile_version, test):
+    def add_test(self, table_tests, experiment_id, version, test):
         """
         Method used to add new test information.
         :param table_tests: the table that is used to store test related documents.
@@ -75,8 +75,7 @@ class RethinkDB:
         return self.add_document(table_tests,
                                  {'createdAt': get_date_now(),
                                   'experiment_id': experiment_id,
-                                  'base_version': base_version,
-                                  'mobile_version': mobile_version,
+                                  'version': version,
                                   'test_data': test})
 
     def add_document(self, table, document):
