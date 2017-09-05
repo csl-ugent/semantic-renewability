@@ -182,11 +182,7 @@ class Executor:
         logging.debug("Starting the struct reordering source to source transformations...")
         semantic_mod_tool = semantic_mod.SemanticMod(self.config.semantic_mod['bin_location'],
                                                      self.config.actc['preprocessor_flags'] + self.config.actc['common_options'])
-        extra_opts = []
-        if mode == "StructReordering":
-            extra_opts = ['-sr_am', str(self.config.default['nr_of_versions'])]
-        elif mode == "FPReordering":
-            extra_opts = ['-fp_am', str(self.config.default['nr_of_versions'])]
+        extra_opts = ['--nr_of_versions', str(self.config.default['nr_of_versions'])]
 
         semantic_mod_tool.execute_structure_reordering(self.config.default['input_source_directory'], source_files,
                                                        self.config.default['output_directory'],
