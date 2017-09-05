@@ -58,6 +58,7 @@ class Config:
         # Parsing the SEMANTIC_MOD section.
         logging.debug("Parsing the SEMANTIC_MOD section...")
         self.semantic_mod['bin_location'] = config_file.get("SEMANTIC_MOD", "BinLocation")
+        self.semantic_mod['seed'] = config_file.get("SEMANTIC_MOD", "Seed")
         self.semantic_mod['type'] = config_file.get("SEMANTIC_MOD", "Type")
 
         # Parsing the ARM_DIABLO_LINUX_GCC section.
