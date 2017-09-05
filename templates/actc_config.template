@@ -264,7 +264,7 @@
     // Binary Code Control Flow Obfuscation
     "BLP04": {{
       "excluded"        : false,
-      "options"         : ["-Of off", "-S", "-vr"],
+      "options"         : ["-Of off", "-S"],
       "self-profiling"  : false,
       "runtime_profiles": false,
       "anti_debugging"  : false,
