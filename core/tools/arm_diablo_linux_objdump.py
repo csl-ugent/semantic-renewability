@@ -13,6 +13,21 @@ class ARMDiabloLinuxObjdump:
         """
         self.bin_location = bin_location
 
+    def compare_binaries(self, binaries):
+        """
+        Method used to compare all binaries.
+        :param binaries: the binaries to compare.
+        :return: True if the binaries are all the same, False if they are not.
+        """
+        # Get all the contents in binary
+        dumps = []
+        for binary in binaries:
+            output = subprocess.check_output([self.bin_location, '--full-contents', binary], universal_newlines=True)
+            dumps.append(output[output.find('Contents'):])
+
+        # Compare the dumps
+        return len(set(dumps)) <= 1
+
     def disassemble_obj_file(self, flags, object_file, output_file):
         """
         Method used to disassemble an object file.

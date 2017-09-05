@@ -302,6 +302,10 @@ class Executor:
         elif mode == 2:
             self.run_actc(generated_versions, version_information, functions_diff)
 
+            # Sanity check: the protected binaries we generated must be the same
+            binaries = [os.path.join(self.actc_.get_output_dir(version), self.config.default['binary_name']) for version in generated_versions]
+            assert self.objdump.compare_binaries(binaries), 'Not all protected binaries we generated are the same!'
+
         # If we are in a mode where binaries are actually created, we can test them.
         if mode and testmode:
             self.test(generated_versions, testmode)
