@@ -142,42 +142,23 @@
   "src2bin": {{
   "excluded": false,
     // Common options for all tools
+    "options" : {common_options},
     //"options"      : ["-ccc-gcc-name  arm-diablo-linux-gnueabi",
     //                  "-gcc-toolchain /opt/diablo-gcc-toolchain",
     //                  "-isysroot      /opt/diablo-gcc-toolchain/arm-diablo-linux-gnueabi/sysroot",
     //                  "-target        arm-diablo-linux-gnueabi"],
-    "options" : ["-ccc-gcc-name  arm-diablo-linux-gnueabi",
-                      "-gcc-toolchain /opt/diablo-gcc-toolchain",
-                      "-isysroot      /opt/diablo-gcc-toolchain/arm-diablo-linux-gnueabi/sysroot",
-                      "-target        arm-diablo-linux-gnueabi"],
 
     "PREPROCESS": {{
       // -I <dir>
       // -isystem <dir>
       // -include <file>
       // -D<macro[=defn]>
-      "options"    : []
+      "options"    : {preprocessor_flags}
     }},
 
     // .c, .cpp
     "COMPILE": {{
-      "options"    : ["-Wall",
-                      "-Wno-unused-function",
-                      "-Wno-unused-parameter",
-                      "-Wshadow",
-                      "-Wsign-compare",
-                      "-Wunknown-pragmas",
-                      "-fPIC",
-                      "-fno-stack-protector",
-                      "-fno-strict-aliasing",
-                      "-fomit-frame-pointer",
-                      "-g",
-                      "-marm",
-                      "-mcpu=cortex-a8",
-                      "-msoft-float",
-                      "-ffunction-sections",
-                      "-no-integrated-as",
-                      "-mstack-alignment=8"],
+      "options"    : {compiler_flags},
       "options_c"  : [],
       "options_cpp": []
     }},
@@ -185,24 +166,14 @@
     // accl.c
     "COMPILE_ACCL": {{
       "protocol"    : "http",
-      "endpoint"    : "192.168.168.192",
+      "endpoint"    : "{server}",
       "port"        : "8088",
       "file_path"   : "./"
     }},
 
     // Linker
     "LINK": {{
-      "options"    : ["-Wl,--fix-cortex-a8",
-                      "-Wl,--hash-style=sysv",
-                      "-Wl,--no-demangle",
-                      "-Wl,--no-merge-exidx-entries",
-                      "-Wl,--no-undefined",
-                      "-fPIC",
-                      "-g",
-                      "-lc",
-                      "-marm",
-                      "-mcpu=cortex-a8",
-                      "-msoft-float"],
+      "options"    : {linker_flags},
       // basename of linked file
       //   if empty, default value computed from options:
       //   "liba.so" if "-shared" else "a.out"
@@ -296,7 +267,7 @@
   // Server side management
   "SERVER": {{
     "excluded"   : false,
-    "ip_address" : "192.168.168.192",
+    "ip_address" : "{server}",
 
     // Code Splitting
     "P10": {{

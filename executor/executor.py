@@ -205,7 +205,7 @@ class Executor:
         # We execute the semantic modification tool with the given source files (and options).
         logging.debug("Starting the struct reordering source to source transformations...")
         semantic_mod_tool = semantic_mod.SemanticMod(self.config.semantic_mod['bin_location'],
-                                                     self.config.semantic_mod['compiler_flags'])
+                                                     self.config.actc['common_options'])
         extra_opts = []
         if mode == "StructReordering":
             extra_opts = ['-sr_am', str(self.config.default['nr_of_versions'])]
@@ -319,7 +319,7 @@ class Executor:
             logging.debug("Transformation id: " + transformation_id)
 
             # The first step is to compile all source files into object files in the analysis directory
-            self.compiler.create_object_files(self.config.arm_diablo_linux_gcc["base_flags"], version_dict["source_files"], version_dict["object_files"])
+            self.compiler.create_object_files(self.config.actc['common_options'] + self.config.actc['preprocessor_flags'] + self.config.actc['compiler_flags'], version_dict["source_files"], version_dict["object_files"])
 
             # We disassemble the generated object files (for DEBUGGING purposes ONLY!)
             self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"], version_dict["object_files"], version_dict["diss_files"])
@@ -396,7 +396,12 @@ class Executor:
             templates.read_template_and_fill('actc_config.template',
                                         {'binary_name': self.config.default['binary_name'],
                                             'source_code': src_header_files_input,
-                                            'annotations': annotations_path},
+                                            'annotations': annotations_path,
+                                            'common_options': json.dumps(self.config.actc['common_options']),
+                                            'compiler_flags': json.dumps(self.config.actc['compiler_flags']),
+                                            'linker_flags': json.dumps(self.config.actc['linker_flags']),
+                                            'preprocessor_flags': json.dumps(self.config.actc['preprocessor_flags']),
+                                            'server': self.config.actc['server']},
                                              actc_config)
 
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.

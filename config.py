@@ -58,20 +58,16 @@ class Config:
         # Parsing the SEMANTIC_MOD section.
         logging.debug("Parsing the SEMANTIC_MOD section...")
         self.semantic_mod['bin_location'] = config_file.get("SEMANTIC_MOD", "BinLocation")
-        self.semantic_mod['compiler_flags'] = json.loads(config_file.get("SEMANTIC_MOD", "CompilerFlags"))
         self.semantic_mod['type'] = config_file.get("SEMANTIC_MOD", "Type")
 
         # Parsing the ARM_DIABLO_LINUX_GCC section.
         logging.debug("Parsing the ARM_DIABLO_LINUX_GCC section...")
         self.arm_diablo_linux_gcc["bin_location"] = config_file.get("ARM_DIABLO_LINUX_GCC", "BinLocation")
-        self.arm_diablo_linux_gcc["base_flags"] = json.loads(config_file.get("ARM_DIABLO_LINUX_GCC", "BaseFlags"))
-        self.arm_diablo_linux_gcc["linker_flags"] = json.loads(config_file.get("ARM_DIABLO_LINUX_GCC", "LinkerFlags"))
 
         # Parsing the ARM_DIABLO_LINUX_OBJDUMP section.
         logging.debug("Parsing the ARM_DIABLO_LINUX_OBJDUMP section...")
         self.arm_diablo_linux_objdump["bin_location"] = config_file.get("ARM_DIABLO_LINUX_OBJDUMP", "BinLocation")
-        self.arm_diablo_linux_objdump["base_flags"] = json.loads(
-                                                        config_file.get("ARM_DIABLO_LINUX_OBJDUMP", "BaseFlags"))
+        self.arm_diablo_linux_objdump["base_flags"] = json.loads(config_file.get("ARM_DIABLO_LINUX_OBJDUMP", "BaseFlags"))
 
         # Parsing the ELF_READER section.
         logging.debug("Parsing the ELF_READER section...")
@@ -82,4 +78,9 @@ class Config:
         logging.debug("Parsing the ACTC section...")
         self.actc["aid"] = config_file.get("ACTC", "AID")
         self.actc["bin_location"] = config_file.get("ACTC", "BinLocation")
+        self.actc["common_options"] = json.loads(config_file.get("ACTC", "CommonOptions"))
+        self.actc["compiler_flags"] = json.loads(config_file.get("ACTC", "CompilerFlags"))
         self.actc["deploy_mobility_script"] = config_file.get("ACTC", "DeployMobilityScript")
+        self.actc["linker_flags"] = json.loads(config_file.get("ACTC", "LinkerFlags"))
+        self.actc["preprocessor_flags"] = json.loads(config_file.get("ACTC", "PreprocessorFlags"))
+        self.actc["server"] = config_file.get("ACTC", "Server")
