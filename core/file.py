@@ -86,7 +86,7 @@ def create_output_paths(source_files, base_directory_from, base_directory_to, su
     for source_file in source_files:
 
         # First we need to extract the relative path of the source files (relative to the base_directory_from)
-        rel_str = obtain_rel_path(source_file, base_directory_from)
+        rel_str = os.path.relpath(source_file, base_directory_from)
 
         # We need to change the suffix of the file.
         new_rel_str = change_suffix_file(rel_str, suffix)
@@ -112,18 +112,6 @@ def change_suffix_file(file_name, new_suffix):
     :return: the changed file_name.
     """
     return file_name.rsplit(sep='.', maxsplit=1)[0] + new_suffix
-
-
-def obtain_rel_path(full_path, base_path):
-    """
-    Method used to obtain the relative path of a specified file on a full path, relative
-    to the given base path.
-    :param full_path: the full path of the file we are going to determine the relative path of.
-    :param base_path: the base path relative to which we consider the file.
-    :return: relative path of given file to base path.
-    """
-    return full_path[len(base_path)+1:]
-
 
 def read_json(full_path):
     """

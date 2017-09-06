@@ -373,8 +373,7 @@ class Executor:
             for idx, sect in enumerate(result):
 
                     # We obtain the relative path to the file of the corresponding object file.
-                    obj_file_name = file.obtain_rel_path(version_information[version]["object_files"][idx],
-                                                         version_information[version]["object_files_directory"])
+                    obj_file_name = os.path.relpath(version_information[version]["object_files"][idx], version_information[version]["object_files_directory"])
 
                     # We create an entry base on the relative path and add a tuple of the full path
                     # and an empty dictionary.
