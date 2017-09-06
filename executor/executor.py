@@ -215,10 +215,9 @@ class Executor:
         # Return a tuple of generated relevant information.
         return directory_structure_input, source_files
 
-    def execute_semantic_mod(self, directory_structure_input, source_files, mode):
+    def execute_semantic_mod(self, source_files, mode):
         """
         Method which applies the semantic modification tool for source to source transformations.
-        :param directory_structure_input: the input directory structure.
         :param source_files: list of source files in the input directory.
         :param mode: the type of transformation to apply.
         :return: a list of generated versions in the output directory.
@@ -246,19 +245,9 @@ class Executor:
 
         # We iterate over each generated version.
         for version in generated_versions:
-
             # We obtain the directory structure of the given version.
             version_directory = os.path.join(self.config.default['output_directory'], version)
-            directory_structure_version = file.discover_full_file_hierarchy(version_directory,
-                                                                            [self.config.default['suffix_source'],
-                                                                             self.config.default['suffix_header']])
-
-            # We copy all files that were not modified (aka not available in the modified directory) to the
-            # modified directory in order to obtain full source directories.
-            file.copy_files_from_directory_to_directory_structure(directory_structure_input,
-                                                                  self.config.default['input_source_directory'],
-                                                                  directory_structure_version,
-                                                                  version_directory)
+            file.copy_tree_without_overwrite(self.config.default['input_source_directory'], version_directory, [self.config.default['suffix_source'], self.config.default['suffix_header']])
 
         # We return a list of generated versions in the output directory.
         return generated_versions
@@ -270,10 +259,10 @@ class Executor:
         """
 
         # We apply pre execution steps towards the output directory.
-        (directory_structure_input, source_files) = self.execute_directory_pre()
+        (_, source_files) = self.execute_directory_pre()
 
         # We apply the semantic modification tool for source to source transformations.
-        generated_versions = self.execute_semantic_mod(directory_structure_input, source_files, self.config.semantic_mod['type'])
+        generated_versions = self.execute_semantic_mod(source_files, self.config.semantic_mod['type'])
 
         # We create a new entry in the 'experiments' table of the rethinkdb.
         self.experiment_id = self.rethinkdb_.add_experiment(self.config.rethinkdb['table_experiments'])

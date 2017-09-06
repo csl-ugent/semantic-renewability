@@ -87,49 +87,37 @@ def filter_directory_structure(directory_structure, suffixes):
                     source_files.append(file_path)
     return source_files
 
-
-def copy_files_from_directory_to_directory_structure(directory_structure_from, from_base_directory,
-                                                     directory_structure_to, to_base_directory):
+def copy_tree_without_overwrite(src, dst, suffixes=[]):
     """
     Method used to copy files from one directory structure to another based on the fact that a files
     does not already exist in the other directory structure.
-    :param directory_structure_from: the directory structure from which we are copying.
-    :param from_base_directory: the base directory of the directory structure from which we are copying.
-    :param directory_structure_to: the base directory of the directory structure to which we are copying.
-    :param to_base_directory: the base directory of the directory structure to which we are copying.
+    :param src: the directory from which we are copying.
+    :param dst: the directory to which we are copying.
     :return:
     """
-    # First we build a directory structure containing all relative files and their full path.
-    # of the 'directory_structure_to'.
-    lookup = dict()
+    # Copy over all files from the source directory, but don't overwrite anything
+    for root, _, files in os.walk(src):
+        relpath = os.path.relpath(root, src)
+        dst_dir = os.path.join(dst, relpath)
+        for f in files:
+            # If any suffixes were specified, we want to check whether we are supposed to copy this file
+            copy = not suffixes
+            for suffix in suffixes:
+                if f.endswith(suffix):
+                    copy = True
+                    break
 
-    # We iterate over all files in each directory.
-    for directory in directory_structure_to.keys():
-        for file in directory_structure_to[directory]:
+            if not copy:
+                continue
 
-            # We extract the relative path of the given file.
-            rel_str = obtain_rel_path(file, to_base_directory)
+            # Don't overwrite files
+            copy = not os.path.exists(os.path.join(dst_dir, f))
 
-            # We store the relative path as a key and the full path as a value in our dictionary.
-            lookup[rel_str] = file
-
-    # We iterate over all files in 'directory_structure_from'
-    for directory in directory_structure_from.keys():
-        for file in directory_structure_from[directory]:
-
-            # We extract the relative path of the given file.
-            rel_str = obtain_rel_path(file, from_base_directory)
-
-            # We check if it is already available in the 'directory_structure_to'
-            if rel_str not in lookup.keys():
-
-                # If not we need to copy the corresponding file to its new location.
-                new_path = os.path.join(to_base_directory, rel_str)
-
-                # We create directories if required for copying the file.
-                os.makedirs(os.path.dirname(new_path), exist_ok=True)
-                shutil.copyfile(file, new_path)
-
+            # Do the actual copy, creating the intermediary directories
+            if copy:
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir)
+                shutil.copy(os.path.join(root, f), dst_dir)
 
 def create_output_paths(source_files, base_directory_from, base_directory_to, suffix):
     """
