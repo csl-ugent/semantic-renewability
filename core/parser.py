@@ -1,9 +1,8 @@
 """
 Module used for parser related functionality.
 """
-import re
 import logging
-
+import re
 
 class Parser:
     """
@@ -57,7 +56,6 @@ class Parser:
 
         # We return the results.
         return results
-
 
 def section_extracter(line):
     """

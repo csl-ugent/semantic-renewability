@@ -1,10 +1,9 @@
 """
 Module used for rethinkdb related functionality.
 """
-import rethinkdb as r
 import logging
+import rethinkdb as r
 from datetime import datetime
-
 
 class RethinkDB:
     """

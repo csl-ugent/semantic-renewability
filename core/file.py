@@ -1,10 +1,9 @@
 """
 Module used for file related functionality.
 """
+import json
 import os
 import shutil
-import json
-
 
 def discover_subdirectories(path_directory):
     """
@@ -102,7 +101,6 @@ def create_output_paths(source_files, base_directory_from, base_directory_to, su
 
     # We return the list of output paths.
     return output_paths
-
 
 def change_suffix_file(file_name, new_suffix):
     """

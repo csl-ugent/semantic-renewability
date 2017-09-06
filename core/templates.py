@@ -4,7 +4,6 @@ import os
 # Path to folder containing all templates.
 TEMPLATE_PATH = "templates"
 
-
 def read_template_and_fill(template_name, data, file_path=None):
     """
     Method used to read a template and fill it in using the given data.

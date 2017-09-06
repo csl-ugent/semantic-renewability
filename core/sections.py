@@ -28,7 +28,6 @@ def dump(elf_reader, name_section, objectfile):
     # Return the dump.
     return output
 
-
 def compare(elf_reader, name_section_one, name_section_two, objfile_one, objfile_two):
     """
     Method used to compare two sections of given object files.
@@ -52,5 +51,3 @@ def compare(elf_reader, name_section_one, name_section_two, objfile_one, objfile
 
     # Return True if both sections are equal.
     return section_one == section_two
-
-
