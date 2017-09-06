@@ -143,10 +143,6 @@
   "excluded": false,
     // Common options for all tools
     "options" : {common_options},
-    //"options"      : ["-ccc-gcc-name  arm-diablo-linux-gnueabi",
-    //                  "-gcc-toolchain /opt/diablo-gcc-toolchain",
-    //                  "-isysroot      /opt/diablo-gcc-toolchain/arm-diablo-linux-gnueabi/sysroot",
-    //                  "-target        arm-diablo-linux-gnueabi"],
 
     "PREPROCESS": {{
       // -I <dir>
