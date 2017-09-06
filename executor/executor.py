@@ -196,25 +196,6 @@ class Executor:
 
         return (analytics, functions_diff)
 
-    def execute_directory_pre(self):
-        """
-        Method which executes the pre execution steps towards
-        the output directory.
-        :return: tuple of the input directory structure and list of source files in the input directory.
-        """
-        # The first step is analyzing the source input directory.
-        directory_structure_input = file.discover_full_file_hierarchy(self.config.default['input_source_directory'],
-                                                                [self.config.default['suffix_source'],
-                                                                 self.config.default['suffix_header']])
-        logging.debug("Directory structure: " + str(directory_structure_input))
-
-        # We extract the source files out of the directory structure.
-        source_files = file.filter_directory_structure(directory_structure_input,
-                                                       [self.config.default['suffix_source']])
-
-        # Return a tuple of generated relevant information.
-        return directory_structure_input, source_files
-
     def execute_semantic_mod(self, source_files, mode):
         """
         Method which applies the semantic modification tool for source to source transformations.
@@ -258,8 +239,8 @@ class Executor:
         :return: nothing.
         """
 
-        # We apply pre execution steps towards the output directory.
-        (_, source_files) = self.execute_directory_pre()
+        # Gather all the source files
+        source_files = file.get_files_with_suffix(self.config.default['input_source_directory'], [self.config.default['suffix_source']])
 
         # We apply the semantic modification tool for source to source transformations.
         generated_versions = self.execute_semantic_mod(source_files, self.config.semantic_mod['type'])
@@ -320,15 +301,9 @@ class Executor:
                                                                     version_information[version]["analysis_directory"],
                                                                     "objfiles")
 
-            # The directory structure of the version source and header files.
-            version_information[version]["directory_structure"] = file.discover_full_file_hierarchy(
-                                                                    version_information[version]["version_directory"],
-                                                                    [self.config.default['suffix_source'],
-                                                                     self.config.default['suffix_header']])
-
             # List of absolute paths to source files of this specific version.
-            version_information[version]["source_files"] = file.filter_directory_structure(
-                                                            version_information[version]["directory_structure"],
+            version_information[version]["source_files"] = file.get_files_with_suffix(
+                                                            version_information[version]["version_directory"],
                                                             [self.config.default['suffix_source']])
 
             # List of absolute paths to the object files in the object files directory.
@@ -450,8 +425,8 @@ class Executor:
             actc_config = os.path.join(self.actc_.path, version + '.json')
             version_information[version]['actc_config'] = actc_config
 
-            # We need to convert our directory structure to a list of source and header files.
-            src_header_files = file.filter_directory_structure(version_information[version]["directory_structure"],
+            # We need to get all source and header files.
+            src_header_files = file.get_files_with_suffix(version_information[version]["version_directory"],
                                                                [self.config.default['suffix_source'],
                                                                 self.config.default['suffix_header']])
 

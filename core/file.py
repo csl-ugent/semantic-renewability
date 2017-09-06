@@ -25,66 +25,17 @@ def discover_subdirectories(path_directory):
             subdirectories.append(file)
     return subdirectories
 
-
-def discover_full_file_hierarchy(path_directory, suffixes):
-    """
-    Method used to discover the full file hierarchy of a given directory path.
-    Only files with certain suffixes (e.g. '.c') are matched.
-    :param path_directory: the base directory to build the file hierarchy from.
-    :param suffixes: list of allowed suffixes (e.g. ['.c', '.h'])
-    :return: dictionary with the directories as key values and the found files
-    are available in the value as a list.
-    """
-    directory_structure = dict()
-    to_traverse = [path_directory]
-
-    # Traverse over all (sub)directories.
-    while to_traverse:
-
-        # We pop the first directory of the list.
-        directory = to_traverse.pop(0)
-
-        # We add an entry to our directory structure.
-        directory_structure[directory] = []
-
-        # We iterate over the files in the given directory.
-        for file in os.listdir(directory):
-
-            # We generate the full file path.
-            file_path = os.path.join(directory, file)
-
-            # If we find a subdirectory, then we need to traverse it.
-            if os.path.isdir(file_path):
-                to_traverse.append(file_path)
-            else:
-
-                # We check if the file ends with one of the given suffixes.
-                for suffix in suffixes:
-                    if file.endswith(suffix):
-                        # We add the file to the directory structure.
-                        directory_structure[directory].append(file_path)
-    return directory_structure
-
-
-def filter_directory_structure(directory_structure, suffixes):
-    """
-    Method used to extract files out of a given directory structure (see discover_full_file_hierarchy)
-    which end on one of the given suffixes.
-    :param directory_structure: the directory structure which is filtered.
-    :param suffixes: allowed suffixes of files to be extracted.
-    :return: a list of extracted file paths.
-    """
-    # We generate a list of source files.
+def get_files_with_suffix(directory, suffixes):
+    # Copy over all files from the source directory, but don't overwrite anything
     source_files = []
-    for directory_path in directory_structure.keys():
-        for file_name in directory_structure[directory_path]:
+    for root, _, files in os.walk(directory):
+        for f in files:
             # We check if the file ends with one of the given suffixes.
             for suffix in suffixes:
-                if file_name.endswith(suffix):
-
-                    # We add the file to the list of source files.
-                    file_path = os.path.join(directory_path, file_name)
+                if f.endswith(suffix):
+                    file_path = os.path.join(root, f)
                     source_files.append(file_path)
+                    break
     return source_files
 
 def copy_tree_without_overwrite(src, dst, suffixes=[]):
