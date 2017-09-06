@@ -127,7 +127,6 @@ class Executor:
 
                     # If the amount of sections are equal, we can start comparing the functions.
                     for section in version_information[version_one]["section_information"][object_file][1][function]:
-
                         # We compare the specific section using the version one and version two object file.
                         if not sections.compare(self.elf_reader, section, section, path_obj_file_version_one,
                                                               path_obj_file_version_two):
@@ -284,122 +283,83 @@ class Executor:
         # We build a dictionary containing all relevant information of the current version.
         version_information = dict()
         for version in generated_versions:
-
             # Create dictionary for this specific version.
-            version_information[version] = dict()
+            version_dict = version_information[version] = dict()
 
             # The location of the generated source files of this version.
-            version_information[version]["version_directory"] = os.path.join(self.config.default['output_directory'],
-                                                                             version)
+            version_dict["version_directory"] = os.path.join(self.config.default['output_directory'], version)
 
             # The location that will be used for version related analysis.
-            version_information[version]["analysis_directory"] = os.path.join(self.config.default['output_directory'],
-                                                                              version + "_analysis")
+            version_dict["analysis_directory"] = os.path.join(self.config.default['output_directory'], version + "_analysis")
 
             # The directory within the analysis directory that will be used to store compiled source files.
-            version_information[version]["object_files_directory"] = os.path.join(
-                                                                    version_information[version]["analysis_directory"],
-                                                                    "objfiles")
+            version_dict["object_files_directory"] = os.path.join(version_dict["analysis_directory"], "objfiles")
 
             # List of absolute paths to source files of this specific version.
-            version_information[version]["source_files"] = file.get_files_with_suffix(
-                                                            version_information[version]["version_directory"],
-                                                            [self.config.default['suffix_source']])
+            version_dict["source_files"] = file.get_files_with_suffix(version_dict["version_directory"], [self.config.default['suffix_source']])
 
             # List of absolute paths to the object files in the object files directory.
-            version_information[version]["object_files"] = file.create_output_paths(
-                                                                version_information[version]["source_files"],
-                                                                version_information[version]["version_directory"],
-                                                                version_information[version]["object_files_directory"],
+            version_dict["object_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"],
                                                                 ".o")
 
             # List of absolute paths to the disassembled files in the object files directory.
-            version_information[version]["diss_files"] = file.create_output_paths(
-                                                                version_information[version]["source_files"],
-                                                                version_information[version]["version_directory"],
-                                                                version_information[version]["object_files_directory"],
-                                                                "_diss.out")
+            version_dict["diss_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], "_diss.out")
 
             # List of absolute paths to ELF files in the object files directory.
-            version_information[version]["elf_files"] = file.create_output_paths(
-                                                                version_information[version]["source_files"],
-                                                                version_information[version]["version_directory"],
-                                                                version_information[version]["object_files_directory"],
-                                                                ".elf")
+            version_dict["elf_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".elf")
 
             # List of absolute paths to section files in the object files directory.
-            version_information[version]["section_files"] = file.create_output_paths(
-                                                                version_information[version]["source_files"],
-                                                                version_information[version]["version_directory"],
-                                                                version_information[version]["object_files_directory"],
-                                                                ".sections")
+            version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".sections")
 
             # We read the generated transformation.json file and add the information to the rethinkdb.
             transformation_id = self.rethinkdb_.add_transformation(self.config.rethinkdb['table_transformations'],
                                                               self.experiment_id,
                                                               version,
-                                                              file.read_json(os.path.join(version_information[version]
-                                                                                          ["version_directory"],
-                                                                             'transformations.json')))
+                                                              file.read_json(os.path.join(version_dict["version_directory"], 'transformations.json')))
             logging.debug("Transformation id: " + transformation_id)
 
             # The first step is to compile all source files into object files in the analysis directory
-            self.compiler.create_object_files(self.config.arm_diablo_linux_gcc["base_flags"],
-                                         version_information[version]["source_files"],
-                                         version_information[version]["object_files"])
+            self.compiler.create_object_files(self.config.arm_diablo_linux_gcc["base_flags"], version_dict["source_files"], version_dict["object_files"])
 
             # We disassemble the generated object files (for DEBUGGING purposes ONLY!)
-            self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"],
-                                          version_information[version]["object_files"],
-                                          version_information[version]["diss_files"])
+            self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"], version_dict["object_files"], version_dict["diss_files"])
 
             # We dump all relevant section information using readelf.
-            self.elf_reader.read_files(self.config.elf_reader["base_flags"],
-                                   version_information[version]["object_files"],
-                                   version_information[version]["elf_files"])
+            self.elf_reader.read_files(self.config.elf_reader["base_flags"], version_dict["object_files"], version_dict["elf_files"])
 
             # We use a custom parser to parse all relevant code (.text) sections
             # out of the ELF files.
             # result is a list of a list of section names.
             # every list in result corresponds to a parsed input file.
-            result = parser.Parser.parse_files(version_information[version]["elf_files"],
-                                               parser.section_extracter,
-                                               version_information[version]["section_files"])
+            result = parser.Parser.parse_files(version_dict["elf_files"], parser.section_extracter, version_dict["section_files"])
 
             # We iterate over sets of sections.
             # We are going to store information regarding the different sections in a dictionary.
             # {obj_file_name: (obj_path, {func_name: [sections]})}
-            version_information[version]["section_information"] = dict()
+            section_info = version_dict["section_information"] = dict()
             for idx, sect in enumerate(result):
-
                     # We obtain the relative path to the file of the corresponding object file.
-                    obj_file_name = os.path.relpath(version_information[version]["object_files"][idx], version_information[version]["object_files_directory"])
+                    obj_file_name = os.path.relpath(version_dict["object_files"][idx], version_dict["object_files_directory"])
 
                     # We create an entry base on the relative path and add a tuple of the full path
                     # and an empty dictionary.
-                    version_information[version]["section_information"][obj_file_name] = \
-                        (version_information[version]["object_files"][idx], dict())
+                    section_info[obj_file_name] = (version_dict["object_files"][idx], dict())
 
                     # We iterate over all sections.
                     for section in sect:
-
                         # We determine the function to which it corresponds.
                         function_name = sections.extract_function_name(section)
 
                         # We check if the function already exists in our dictionary.
-                        if function_name not in version_information[version]["section_information"][obj_file_name][1]:
-
+                        if function_name not in section_info[obj_file_name][1]:
                             # We create a new entry containing a single list with the section.
-                            version_information[version]["section_information"][obj_file_name][1][function_name] = \
-                                [section]
+                            section_info[obj_file_name][1][function_name] = [section]
                         else:
                             # We add the section to the existing list.
-                            version_information[version]["section_information"][obj_file_name][1][function_name].\
-                                append(section)
+                            section_info[obj_file_name][1][function_name].append(section)
 
             # Debug information.
-            logging.debug("Section information for version: " + version +
-                          " is: " + str(version_information[version]["section_information"]))
+            logging.debug("Section information for version: " + version + " is: " + str(section_info))
 
         return version_information
 
