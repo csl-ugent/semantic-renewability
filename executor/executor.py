@@ -50,87 +50,56 @@ class Executor:
         # We create a dictionary with important analytics information.
         analytics = dict()
         analytics['general'] = dict()
-        analytics['functions'] = dict()
-
-        # We add some analytics information.
         analytics['general']['source_files'] = len(source_files)
         analytics['general']['source_input'] = self.config.default['input_source_directory']
         analytics['general']['transformations'] = len(generated_versions)
 
-        # We will compare the section information of all version and decide which functions need to
-        # made mobile.
-        analytics['general']['amount_functions'] = 0
+        # Initialize the datastructures we use to keep differences
+        functions_diff = set()# The functions which are considered 'different'.
+        functions_sections_diff = dict()# The sections of functions which are different.
 
-        # The functions which are considered 'different'.
-        functions_diff = set()
-
-        # The sections of functions which are different.
-        functions_sections_diff = dict()
+        # Initialize the function datastructures
+        analytics['functions'] = dict()
+        functions = []
+        section_info = version_information[generated_versions[0]]["section_information"]
+        for obj in section_info:
+            functions = functions + list(section_info[obj][1].keys())
+        analytics['general']['amount_functions'] = len(functions)
+        for function in functions:
+            analytics['functions'][function] = dict()
+            analytics['functions'][function]['reasons'] = []
+            functions_sections_diff[function] = []
 
         # We will start comparing the sections of the different versions.
-        for i in range(len(generated_versions)-1):
-
-            # The name of the first and second version.
-            version_one = generated_versions[i]
-            version_two = generated_versions[i+1]
-
-            # Debug.
+        for version_one, version_two in zip(generated_versions[:-1], generated_versions[1:]):
             logging.debug("Comparing version: " + version_one + " and version: " + version_two)
 
             # Iterate over all object files (we assume both versions have the same object files).
             for object_file in version_information[version_one]["section_information"]:
-
-                # We obtain the path to the version specific object file.
-                path_obj_file_version_one = version_information[version_one]["section_information"][object_file][0]
-                path_obj_file_version_two = version_information[version_two]["section_information"][object_file][0]
+                obj_dict_1 = version_information[version_one]["section_information"][object_file]
+                obj_dict_2 = version_information[version_two]["section_information"][object_file]
 
                 # Iterate over all functions within this object file.
                 # (we assume both versions have the same functions)
-                for function in version_information[version_one]["section_information"][object_file][1].keys():
-
-                    # Increase amount of functions.
-                    if i == 0:
-                        analytics['general']['amount_functions'] += 1
-                        analytics['functions'][function] = dict()
-                        analytics['functions'][function]['reasons'] = []
-
-                    # We create an entry in the function section difference dictionary.
-                    functions_sections_diff[function] = []
-
+                for function in obj_dict_1[1].keys():
                     # If the amount of sections of a function differs, they are considered different.
-                    if len(version_information[version_one]["section_information"][object_file][1][function]) != \
-                            len(version_information[version_two]["section_information"][object_file][1][function]):
-
+                    if len(obj_dict_1[1][function]) != len(obj_dict_2[1][function]):
                         # Debug.
-                        logging.debug("Function: " + function +
-                                      " has different amount of sections in both versions, version one: " +
-                                      str(version_information[version_one]["section_information"][object_file][1]
-                                          [function]) +
-                                      " version two: " +
-                                      str(version_information[version_two]["section_information"][object_file][1]
-                                          [function]))
+                        logging.debug("Function: " + function + " has different amount of sections in both versions, version one: " +
+                                str(obj_dict_1[1][function]) + " version two: " + str(obj_dict_2[1][function]))
 
                         # We add information to our analytics.
-                        analytics['functions'][function]['reasons'].append("Different amount of sections comparing " +
-                                                                           "version: \n" + version_one + "(" +
-                                                                           str(version_information[version_one]
-                                                                                ["section_information"][object_file][1]
-                                                                                [function]) + ")\nand version: " +
-                                                                           version_two + "(" +
-                                                                           str(version_information[version_two]
-                                                                               ["section_information"][object_file][1]
-                                                                               [function]) + ").\n\n")
+                        analytics['functions'][function]['reasons'].append("Different amount of sections comparing " + "version: \n" + version_one +
+                                "(" + str(obj_dict_1[1][function]) + ")\nand version: " + version_two + "(" + str(obj_dict_2[1][function]) + ").\n\n")
 
                         # We append the function to the list of functions which are considered different.
                         functions_diff.add((function, object_file))
                         continue
 
                     # If the amount of sections are equal, we can start comparing the functions.
-                    for section in version_information[version_one]["section_information"][object_file][1][function]:
+                    for section in obj_dict_1[1][function]:
                         # We compare the specific section using the version one and version two object file.
-                        if not sections.compare(self.elf_reader, section, section, path_obj_file_version_one,
-                                                              path_obj_file_version_two):
-
+                        if not sections.compare(self.elf_reader, section, section, obj_dict_1[0], obj_dict_2[0]):
                             # If the sections are not equal, the functions are considered different.
                             functions_diff.add((function, object_file))
 
@@ -138,27 +107,19 @@ class Executor:
                             functions_sections_diff[function].append(section)
 
                             # We add information to our analytics.
-                            analytics['functions'][function]['reasons'].append("Section: " + section +
-                                                                               " is different when comparing\n" +
-                                                                               "version: " + version_one +
-                                                                               " and version: " +
-                                                                               version_two + ".\n\n")
+                            analytics['functions'][function]['reasons'].append("Section: " + section + " is different when comparing\n" +
+                                    "version: " + version_one + " and version: " + version_two + ".\n\n")
 
                             # Debug.
-                            logging.debug("Section: " + section + " is different when comparing version: " +
-                                          version_one + " and version: " + version_two)
+                            logging.debug("Section: " + section + " is different when comparing version: " + version_one + " and version: " + version_two)
 
         # We determine which functions remained the same.
         functions_equal = set()
-        if len(generated_versions) > 0:
-
+        if len(generated_versions):
             # We take the first version and iterate over all object files.
             version = generated_versions[0]
             for object_file in version_information[version]["section_information"]:
-
-                # Iterate over all functions within this object file.
-                for function in version_information[version_one]["section_information"][object_file][1].keys():
-
+                for function in version_information[version]["section_information"][object_file][1].keys():
                     # If the function was not different, we add it to the set of equal functions.
                     if (function, object_file) not in functions_diff:
                         functions_equal.add((function, object_file))
