@@ -57,7 +57,17 @@ class Parser:
         # We return the results.
         return results
 
-def section_extracter(line):
+def data_section_extracter(line):
+    """
+    Method used to extract the relevant function sections.
+    :param line: the current line in the file.
+    :return: a list of relevant function sections.
+    """
+    result = re.search('([^ ]*.(data|rodata).[^ \n]*)', line)
+    if result is not None:
+        return result.group(0)
+
+def text_section_extracter(line):
     """
     Method used to extract the relevant function sections.
     :param line: the current line in the file.

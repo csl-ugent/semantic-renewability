@@ -61,7 +61,7 @@ class Executor:
         # Initialize the function datastructures
         analytics['functions'] = dict()
         functions = []
-        section_info = version_information[generated_versions[0]]["section_information"]
+        section_info = version_information[generated_versions[0]]["text_section_information"]
         for obj in section_info:
             functions = functions + list(section_info[obj][1].keys())
         analytics['general']['amount_functions'] = len(functions)
@@ -75,9 +75,9 @@ class Executor:
             logging.debug("Comparing version: " + version_one + " and version: " + version_two)
 
             # Iterate over all object files (we assume both versions have the same object files).
-            for object_file in version_information[version_one]["section_information"]:
-                obj_dict_1 = version_information[version_one]["section_information"][object_file]
-                obj_dict_2 = version_information[version_two]["section_information"][object_file]
+            for object_file in version_information[version_one]["text_section_information"]:
+                obj_dict_1 = version_information[version_one]["text_section_information"][object_file]
+                obj_dict_2 = version_information[version_two]["text_section_information"][object_file]
 
                 # Iterate over all functions within this object file.
                 # (we assume both versions have the same functions)
@@ -118,8 +118,8 @@ class Executor:
         if len(generated_versions):
             # We take the first version and iterate over all object files.
             version = generated_versions[0]
-            for object_file in version_information[version]["section_information"]:
-                for function in version_information[version]["section_information"][object_file][1].keys():
+            for object_file in version_information[version]["text_section_information"]:
+                for function in version_information[version]["text_section_information"][object_file][1].keys():
                     # If the function was not different, we add it to the set of equal functions.
                     if (function, object_file) not in functions_diff:
                         functions_equal.add((function, object_file))
@@ -289,16 +289,17 @@ class Executor:
             self.elf_reader.read_files(self.config.elf_reader["base_flags"], version_dict["object_files"], version_dict["elf_files"])
 
             # We use a custom parser to parse all relevant code (.text) sections
-            # out of the ELF files.
-            # result is a list of a list of section names.
-            # every list in result corresponds to a parsed input file.
-            result = parser.Parser.parse_files(version_dict["elf_files"], parser.section_extracter, version_dict["section_files"])
+            # out of the ELF files. The result is a list of a list of section names.
+            # Every list in the result corresponds to a parsed input file.
+            data_sections = parser.Parser.parse_files(version_dict["elf_files"], parser.data_section_extracter, version_dict["section_files"])
+            text_sections = parser.Parser.parse_files(version_dict["elf_files"], parser.text_section_extracter, version_dict["section_files"])
 
-            # We iterate over sets of sections.
-            # We are going to store information regarding the different sections in a dictionary.
-            # {obj_file_name: (obj_path, {func_name: [sections]})}
-            section_info = version_dict["section_information"] = dict()
-            for idx, sect in enumerate(result):
+            def create_section_dict(version_dict, section_set):
+                # We iterate over sets of sections.
+                # We are going to store information regarding the different sections in a dictionary.
+                # {obj_file_name: (obj_path, {func_name: [sections]})}
+                section_info = dict()
+                for idx, sect in enumerate(section_set):
                     # We obtain the relative path to the file of the corresponding object file.
                     obj_file_name = os.path.relpath(version_dict["object_files"][idx], version_dict["object_files_directory"])
 
@@ -308,19 +309,21 @@ class Executor:
 
                     # We iterate over all sections.
                     for section in sect:
-                        # We determine the function to which it corresponds.
-                        function_name = sections.extract_function_name(section)
+                        # We determine the symbol to which it corresponds.
+                        name = sections.extract_symbol_name(section)
 
-                        # We check if the function already exists in our dictionary.
-                        if function_name not in section_info[obj_file_name][1]:
+                        # We check if the symbol already exists in our dictionary.
+                        if name not in section_info[obj_file_name][1]:
                             # We create a new entry containing a single list with the section.
-                            section_info[obj_file_name][1][function_name] = [section]
+                            section_info[obj_file_name][1][name] = [section]
                         else:
                             # We add the section to the existing list.
-                            section_info[obj_file_name][1][function_name].append(section)
+                            section_info[obj_file_name][1][name].append(section)
 
-            # Debug information.
-            logging.debug("Section information for version: " + version + " is: " + str(section_info))
+                return section_info
+
+            version_dict["data_section_information"] = create_section_dict(version_dict, data_sections)
+            version_dict["text_section_information"] = create_section_dict(version_dict, text_sections)
 
         return version_information
 

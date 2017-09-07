@@ -2,13 +2,13 @@
 import logging
 import re
 
-def extract_function_name(section):
+def extract_symbol_name(section):
     """
-    Method used to extract the function name of a section name.
-    :param section: the section from which we will extract the function name.
-    :return: the function name corresponding to this section or None if not found.
+    Method used to extract from a section name the name of the that symbol is defined in it.
+    :param section: the section from which we will extract the symbol name.
+    :return: the symbol name corresponding to this section or None if not found.
     """
-    result = re.search('[^ ]*.text.([^ \n]*)', section)
+    result = re.search('[^ ]*.(?:data|rodata|text).([^ \n]*)', section)
     if result is not None:
         return result.group(1)
 
