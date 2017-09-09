@@ -54,10 +54,6 @@ class Executor:
         analytics['general']['source_input'] = self.config.default['input_source_directory']
         analytics['general']['transformations'] = len(generated_versions)
 
-        # Initialize the datastructures we use to keep differences
-        functions_diff = set()# The functions which are considered 'different'.
-        functions_sections_diff = dict()# The sections of functions which are different.
-
         # Initialize the function datastructures
         analytics['functions'] = dict()
         functions = []
@@ -68,9 +64,10 @@ class Executor:
         for function in functions:
             analytics['functions'][function] = dict()
             analytics['functions'][function]['reasons'] = []
-            functions_sections_diff[function] = []
 
         # We will start comparing the sections of the different versions.
+        functions_diff = set()# The functions which are considered 'different'.
+        sections_diff = []# The sections that are different.
         for version_one, version_two in zip(generated_versions[:-1], generated_versions[1:]):
             logging.debug("Comparing version: " + version_one + " and version: " + version_two)
 
@@ -104,7 +101,7 @@ class Executor:
                             functions_diff.add((function, object_file))
 
                             # We keep track of the specific function that is different.
-                            functions_sections_diff[function].append(section)
+                            sections_diff.append((object_file, function, section))
 
                             # We add information to our analytics.
                             analytics['functions'][function]['reasons'].append("Section: " + section + " is different when comparing\n" +
@@ -152,7 +149,7 @@ class Executor:
 
         # Debug
         logging.debug("Functions considered different: " + str(functions_diff))
-        logging.debug("Sections which are different: " + str(functions_sections_diff))
+        logging.debug("Sections which are different: " + str(sections_diff))
 
         return (analytics, functions_diff)
 
