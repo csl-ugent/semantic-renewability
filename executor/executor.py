@@ -56,14 +56,12 @@ class Executor:
 
         # Initialize the function datastructures
         analytics['functions'] = dict()
-        functions = []
-        section_info = version_information[generated_versions[0]]["text_section_information"]
-        for obj in section_info:
-            functions = functions + list(section_info[obj][1].keys())
-        analytics['general']['amount_functions'] = len(functions)
-        for function in functions:
-            analytics['functions'][function] = dict()
-            analytics['functions'][function]['reasons'] = []
+        for obj_name, obj in version_information[generated_versions[0]]["text_section_information"].items():
+            for function in obj[1].keys():
+                function_tuple = (function, obj_name)
+                analytics['functions'][function_tuple] = dict()
+                analytics['functions'][function_tuple]['reasons'] = []
+        analytics['general']['amount_functions'] = len(analytics['functions'])
 
         # We will start comparing the sections of the different versions.
         functions_diff = set()# The functions which are considered 'different'.
@@ -79,6 +77,8 @@ class Executor:
                 # Iterate over all functions within this object file.
                 # (we assume both versions have the same functions)
                 for function in obj_dict_1[1].keys():
+                    function_tuple = (function, object_file)
+
                     # If the amount of sections of a function differs, they are considered different.
                     if len(obj_dict_1[1][function]) != len(obj_dict_2[1][function]):
                         # Debug.
@@ -86,11 +86,11 @@ class Executor:
                                 str(obj_dict_1[1][function]) + " version two: " + str(obj_dict_2[1][function]))
 
                         # We add information to our analytics.
-                        analytics['functions'][function]['reasons'].append("Different amount of sections comparing " + "version: \n" + version_one +
+                        analytics['functions'][function_tuple]['reasons'].append("Different amount of sections comparing " + "version: \n" + version_one +
                                 "(" + str(obj_dict_1[1][function]) + ")\nand version: " + version_two + "(" + str(obj_dict_2[1][function]) + ").\n\n")
 
                         # We append the function to the list of functions which are considered different.
-                        functions_diff.add((function, object_file))
+                        functions_diff.add(function_tuple)
                         continue
 
                     # If the amount of sections are equal, we can start comparing the functions.
@@ -98,13 +98,13 @@ class Executor:
                         # We compare the specific section using the version one and version two object file.
                         if not sections.compare(self.elf_reader, section, section, obj_dict_1[0], obj_dict_2[0]):
                             # If the sections are not equal, the functions are considered different.
-                            functions_diff.add((function, object_file))
+                            functions_diff.add(function_tuple)
 
                             # We keep track of the specific function that is different.
                             sections_diff.append((object_file, function, section))
 
                             # We add information to our analytics.
-                            analytics['functions'][function]['reasons'].append("Section: " + section + " is different when comparing\n" +
+                            analytics['functions'][function_tuple]['reasons'].append("Section: " + section + " is different when comparing\n" +
                                     "version: " + version_one + " and version: " + version_two + ".\n\n")
 
                             # Debug.
@@ -123,29 +123,39 @@ class Executor:
 
         # Store all analytics information with respect to the mobile functions/fixed functions.
         analytics['general']['mobile_functions'] = []
-        for idx, (function, obj_file) in enumerate(functions_diff):
-            analytics['general']['mobile_functions'].append({'name': function, 'object_file': obj_file})
-            analytics['functions'][function]['mobile'] = True
-            analytics['functions'][function]['obj_file'] = obj_file
+        for idx, (function, object_file) in enumerate(functions_diff):
+            function_tuple = (function, object_file)
+            analytics['general']['mobile_functions'].append({'name': function, 'object_file': object_file})
+            analytics['functions'][function_tuple]['mobile'] = True
+            analytics['functions'][function_tuple]['obj_file'] = object_file
         analytics['general']['amount_mobile'] = len(analytics['general']['mobile_functions'])
 
         analytics['general']['fixed_functions'] = []
-        for idx, (function, obj_file) in enumerate(functions_equal):
-            analytics['general']['fixed_functions'].append({'name': function, 'object_file': obj_file})
-            analytics['functions'][function]['mobile'] = False
-            analytics['functions'][function]['obj_file'] = obj_file
+        for idx, (function, object_file) in enumerate(functions_equal):
+            function_tuple = (function, object_file)
+            analytics['general']['fixed_functions'].append({'name': function, 'object_file': object_file})
+            analytics['functions'][function_tuple]['mobile'] = False
+            analytics['functions'][function_tuple]['obj_file'] = object_file
 
         # Transformation of analytics (convenience)
         function_data = []
-        for function in analytics['functions'].keys():
-            function_data.append({'name': function, 'mobile': analytics['functions'][function]['mobile'],
-                                  'reasons': analytics['functions'][function]['reasons'],
-                                  'obj_file': analytics['functions'][function]['obj_file']})
+        for (function, object_file) in analytics['functions'].keys():
+            function_tuple = (function, object_file)
+            function_data.append({'name': function, 'mobile': analytics['functions'][function_tuple]['mobile'],
+                                  'reasons': analytics['functions'][function_tuple]['reasons'],
+                                  'obj_file': object_file})
 
         analytics['functions'] = function_data
 
         # Store the analytics information into the rethinkdb.
         self.rethinkdb_.add_analytics(self.config.rethinkdb['table_analytics'], self.experiment_id, analytics)
+
+        # Transform the set of differing function tuples to a list of function names. There is a loss
+        # of accuracy here, as the object file the function is actually from is discarded. This reflects
+        # how annotations in Diablo will also simply match on function name, and not take the originating
+        # object file into account.
+        functions_diff = list(functions_diff)
+        functions_diff = [function for (function, object_file) in functions_diff]
 
         # Debug
         logging.debug("Functions considered different: " + str(functions_diff))
@@ -331,10 +341,10 @@ class Executor:
         # We generate annotations for the functions which have to be made mobile (using a predefined template).
         logging.debug("Creating mobile block annotations...")
         annotations = []
-        for (func, object_file) in functions_diff:
+        for function in functions_diff:
 
             # Function specific annotation.
-            annotations.append(templates.read_template_and_fill('function_annotation.template', {'function': func}, None))
+            annotations.append(templates.read_template_and_fill('function_annotation.template', {'function': function}, None))
 
         # Write the annotation away in comma-separated style.
         templates.read_template_and_fill('annotations.template', {'functions': ','.join(annotations)}, annotations_path)
