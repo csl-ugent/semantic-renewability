@@ -54,61 +54,66 @@ class Executor:
         analytics['general']['source_input'] = self.config.default['input_source_directory']
         analytics['general']['transformations'] = len(generated_versions)
 
-        # Initialize the function datastructures
-        analytics['functions'] = dict()
-        for obj_name, obj in version_information[generated_versions[0]]["text_section_information"].items():
-            for function in obj[1].keys():
-                function_tuple = (function, obj_name)
-                analytics['functions'][function_tuple] = dict()
-                analytics['functions'][function_tuple]['reasons'] = []
-        analytics['general']['amount_functions'] = len(analytics['functions'])
+        def analyze_symbols_in_section_info(generated_versions, version_information, section_info):
+            # Initialize the symbol datastructures
+            symbol_info = dict()
+            for obj_name, obj in version_information[generated_versions[0]][section_info].items():
+                for symbol in obj[1].keys():
+                    symbol_tuple = (symbol, obj_name)
+                    symbol_info[symbol_tuple] = dict()
+                    symbol_info[symbol_tuple]['reasons'] = []
 
-        # We will start comparing the sections of the different versions.
-        functions_diff = set()# The functions which are considered 'different'.
-        sections_diff = []# The sections that are different.
-        for version_one, version_two in zip(generated_versions[:-1], generated_versions[1:]):
-            logging.debug("Comparing version: " + version_one + " and version: " + version_two)
+            # We will start comparing the sections of the different versions.
+            symbols_diff = set()# The symbols which are considered 'different'.
+            sections_diff = []# The sections that are different.
+            for version_one, version_two in zip(generated_versions[:-1], generated_versions[1:]):
+                logging.debug("Comparing version: " + version_one + " and version: " + version_two)
 
-            # Iterate over all object files (we assume both versions have the same object files).
-            for object_file in version_information[version_one]["text_section_information"]:
-                obj_dict_1 = version_information[version_one]["text_section_information"][object_file]
-                obj_dict_2 = version_information[version_two]["text_section_information"][object_file]
+                # Iterate over all object files (we assume both versions have the same object files).
+                for object_file in version_information[version_one][section_info]:
+                    obj_dict_1 = version_information[version_one][section_info][object_file]
+                    obj_dict_2 = version_information[version_two][section_info][object_file]
 
-                # Iterate over all functions within this object file.
-                # (we assume both versions have the same functions)
-                for function in obj_dict_1[1].keys():
-                    function_tuple = (function, object_file)
+                    # Iterate over all symbols within this object file.
+                    # (we assume both versions have the same symbols)
+                    for symbol in obj_dict_1[1].keys():
+                        symbol_tuple = (symbol, object_file)
 
-                    # If the amount of sections of a function differs, they are considered different.
-                    if len(obj_dict_1[1][function]) != len(obj_dict_2[1][function]):
-                        # Debug.
-                        logging.debug("Function: " + function + " has different amount of sections in both versions, version one: " +
-                                str(obj_dict_1[1][function]) + " version two: " + str(obj_dict_2[1][function]))
-
-                        # We add information to our analytics.
-                        analytics['functions'][function_tuple]['reasons'].append("Different amount of sections comparing " + "version: \n" + version_one +
-                                "(" + str(obj_dict_1[1][function]) + ")\nand version: " + version_two + "(" + str(obj_dict_2[1][function]) + ").\n\n")
-
-                        # We append the function to the list of functions which are considered different.
-                        functions_diff.add(function_tuple)
-                        continue
-
-                    # If the amount of sections are equal, we can start comparing the functions.
-                    for section in obj_dict_1[1][function]:
-                        # We compare the specific section using the version one and version two object file.
-                        if not sections.compare(self.elf_reader, section, section, obj_dict_1[0], obj_dict_2[0]):
-                            # If the sections are not equal, the functions are considered different.
-                            functions_diff.add(function_tuple)
-
-                            # We keep track of the specific function that is different.
-                            sections_diff.append((object_file, function, section))
+                        # If the amount of sections for a symbol differ, they are considered different.
+                        if len(obj_dict_1[1][symbol]) != len(obj_dict_2[1][symbol]):
+                            # Debug.
+                            logging.debug("Symbol: " + symbol + " has different amount of sections in both versions, version one: " +
+                                    str(obj_dict_1[1][symbol]) + " version two: " + str(obj_dict_2[1][symbol]))
 
                             # We add information to our analytics.
-                            analytics['functions'][function_tuple]['reasons'].append("Section: " + section + " is different when comparing\n" +
-                                    "version: " + version_one + " and version: " + version_two + ".\n\n")
+                            symbol_info[symbol_tuple]['reasons'].append("Different amount of sections comparing " + "version: \n" + version_one +
+                                    "(" + str(obj_dict_1[1][symbol]) + ")\nand version: " + version_two + "(" + str(obj_dict_2[1][symbol]) + ").\n\n")
 
-                            # Debug.
-                            logging.debug("Section: " + section + " is different when comparing version: " + version_one + " and version: " + version_two)
+                            # We append the symbol to the list of symbols which are considered different.
+                            symbols_diff.add(symbol_tuple)
+                            continue
+
+                        # If the amount of sections are equal, we can start comparing the symbols.
+                        for section in obj_dict_1[1][symbol]:
+                            # We compare the specific section using the version one and version two object file.
+                            if not sections.compare(self.elf_reader, section, section, obj_dict_1[0], obj_dict_2[0]):
+                                # If the sections are not equal, the symbols are considered different.
+                                symbols_diff.add(symbol_tuple)
+
+                                # We keep track of the specific symbol that is different.
+                                sections_diff.append((object_file, symbol, section))
+
+                                # We add information to our analytics.
+                                symbol_info[symbol_tuple]['reasons'].append("Section: " + section + " is different when comparing\n" +
+                                        "version: " + version_one + " and version: " + version_two + ".\n\n")
+
+                                # Debug.
+                                logging.debug("Section: " + section + " is different when comparing version: " + version_one + " and version: " + version_two)
+
+            return (symbol_info, symbols_diff, sections_diff)
+
+        analytics['functions'], functions_diff, sections_diff = analyze_symbols_in_section_info(generated_versions, version_information, "text_section_information")
+        analytics['general']['amount_functions'] = len(analytics['functions'])
 
         # We determine which functions remained the same.
         functions_equal = set()
