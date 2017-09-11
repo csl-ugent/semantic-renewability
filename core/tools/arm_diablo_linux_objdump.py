@@ -23,7 +23,22 @@ class ARMDiabloLinuxObjdump:
         dumps = []
         for binary in binaries:
             output = subprocess.check_output([self.bin_location, '--full-contents', binary], universal_newlines=True)
-            dumps.append(output[output.find('Contents'):])
+
+            # Split into sections and dump the first element (only contains file name, which differs)
+            sections = output.split('Contents of section ')[1:]
+            for idx, sec in enumerate(sections):
+                if sec.startswith('.text'):
+                    # Get the name of the section, and obtain its disassembly
+                    section_name = sec[:sec.find(':')]
+                    output = subprocess.check_output([self.bin_location, '--disassemble', '--section=' + section_name, binary], universal_newlines=True)
+
+                    # Filter the disassembly by removing the file name, the .word instructions,
+                    # and the DIABLO_UNIQUE_GOT_USE symbols (that also contain the path)
+                    lines = output[output.find('Disassembly'):].splitlines()
+                    lines = [line for line in lines if '.word' not in line and 'DIABLO_UNIQUE_GOT_USE' not in line]
+                    sections[idx] = '\n'.join(lines)
+
+            dumps.append(''.join(sections))
 
         # Compare the dumps
         return len(set(dumps)) <= 1
