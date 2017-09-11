@@ -114,6 +114,8 @@ class Executor:
 
         analytics['functions'], functions_diff, sections_diff = analyze_symbols_in_section_info(generated_versions, version_information, "text_section_information")
         analytics['general']['amount_functions'] = len(analytics['functions'])
+        _, data_diff, data_sections_diff = analyze_symbols_in_section_info(generated_versions, version_information, "data_section_information")
+        sections_diff = sections_diff + data_sections_diff
 
         # We determine which functions remained the same.
         functions_equal = set()
@@ -164,9 +166,10 @@ class Executor:
 
         # Debug
         logging.debug("Functions considered different: " + str(functions_diff))
+        logging.debug("Data considered different: " + str(data_diff))
         logging.debug("Sections which are different: " + str(sections_diff))
 
-        return (analytics, functions_diff)
+        return (analytics, functions_diff, data_diff)
 
     def execute_semantic_mod(self, source_files, mode):
         """
@@ -224,8 +227,10 @@ class Executor:
         # Gather all version information
         version_information = self.gather_version_information(generated_versions)
 
-        # Do some analysis and find those functions that differ
-        (analytics, functions_diff) = self.analyze(source_files, generated_versions, version_information)
+        # Do some analysis and find those functions that differ.
+        # Make sure there aren't any differences in the data sections.
+        (analytics, functions_diff, data_diff) = self.analyze(source_files, generated_versions, version_information)
+        assert not data_diff, 'Differences were introduced in data sections!'
 
         # In this mode we will stop execution here and output the result as a json file as well.
         if mode == 0:
