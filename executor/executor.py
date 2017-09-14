@@ -181,7 +181,7 @@ class Executor:
         # We execute the semantic modification tool with the given source files (and options).
         logging.debug("Starting the struct reordering source to source transformations...")
         semantic_mod_tool = semantic_mod.SemanticMod(self.config.semantic_mod['bin_location'],
-                                                     self.config.actc['common_options'])
+                                                     self.config.actc['preprocessor_flags'] + self.config.actc['common_options'])
         extra_opts = []
         if mode == "StructReordering":
             extra_opts = ['-sr_am', str(self.config.default['nr_of_versions'])]
