@@ -29,7 +29,7 @@ class ACTC:
         command_exec = [self.bin_location, '--aidfixed', self.config['aid'], '-f', config_file, '-d', mode]
 
         # Execute the command.
-        subprocess.check_call(command_exec)
+        subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     def get_mobile_blocks_dir(self, name):
         """

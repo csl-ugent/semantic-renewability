@@ -28,7 +28,7 @@ class ARMDiabloLinuxGCC:
             flags + [source_file]
 
         # We execute the command.
-        subprocess.check_call(command_exec)
+        subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     def create_object_files(self, flags, source_files, output_files=None):
         """

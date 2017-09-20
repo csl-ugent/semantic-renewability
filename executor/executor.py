@@ -214,6 +214,7 @@ class Executor:
         source_files = file.get_files_with_suffix(self.config.default['input_source_directory'], [self.config.default['suffix_source']])
 
         # We apply the semantic modification tool for source to source transformations.
+        print('************ Running semantic-mod tool **********')
         generated_versions = self.execute_semantic_mod(source_files, self.config.semantic_mod['type'])
 
         # We create a new entry in the 'experiments' table of the rethinkdb.
@@ -221,10 +222,12 @@ class Executor:
         logging.debug("Experiment id: " + self.experiment_id)
 
         # Gather all version information
+        print('************ Gathering version information **********')
         version_information = self.gather_version_information(generated_versions)
 
         # Do some analysis and find those functions that differ.
         # Make sure there aren't any differences in the data sections.
+        print('************ Analyzing differences **********')
         (analytics, functions_diff, data_diff) = self.analyze(source_files, generated_versions, version_information)
         assert not data_diff, 'Differences were introduced in data sections!'
 
@@ -239,10 +242,12 @@ class Executor:
 
         # In this mode we run the ACTC on the rewritten source code, without code mobility.
         elif mode == 1:
+            print('************ Running ACTC without CM **********')
             self.run_actc(generated_versions, version_information, set())
 
         # In this mode we run the ACTC on the rewritten source code, **with** code mobility.
         elif mode == 2:
+            print('************ Running ACTC with CM **********')
             self.run_actc(generated_versions, version_information, functions_diff)
 
             # Sanity check: the protected binaries we generated must be the same
@@ -251,6 +256,7 @@ class Executor:
 
         # If we are in a mode where binaries are actually created, we can test them.
         if mode and testmode:
+            print('************ Testing for correctness **********')
             self.test(generated_versions, testmode)
 
     def gather_version_information(self, generated_versions):

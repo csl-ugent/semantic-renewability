@@ -30,4 +30,4 @@ class SemanticMod:
                        ['-od', output_directory] + extra_opts + ["--"] + self.compiler_flags
 
         # We execute the command.
-        subprocess.check_call(command_exec)
+        subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
