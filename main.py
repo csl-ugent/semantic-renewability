@@ -32,7 +32,7 @@ def main(mode, regression_seed, testmode):
     # Every run is saved to a separate directory. If no regression was requested we simply run
     # once with the configured seed.
     output_dir_config = config_obj.default['output_directory']
-    shutil.rmtree(output_dir_config)
+    shutil.rmtree(output_dir_config, True)
     while True:
         if regression_seed:
             config_obj.semantic_mod['seed'] = str(regression_seed)
