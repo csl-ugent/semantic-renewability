@@ -10,6 +10,7 @@ import configparser
 import logging
 import os
 import shutil
+import traceback
 
 import executor.executor as executor
 
@@ -53,6 +54,7 @@ def main(mode, regression_seed, testmode):
             # If we're regression testing, we need to do some work to figure out whether
             # execution was successful or not. The result is then appended to the regression log.
             if regression_seed:
+                print('************************ Executing for seed ' + str(regression_seed) + ' **********************')
                 try:
                     result = True
                     executor_flow.execute(mode, testmode)
@@ -60,9 +62,12 @@ def main(mode, regression_seed, testmode):
                     raise
                 except:
                     result = False
+                    traceback.print_exc()
                     pass
-                with open(os.path.join(output_dir_config, 'regression_log'), 'a') as f:
-                    f.write('Result for seed ' + str(regression_seed) + ': ' + str(result) + '\n')
+
+                # Output result
+                print('************************ Result for seed ' + str(regression_seed) + ': ' + str(result) + ' ************************')
+                print()
             else:
                 executor_flow.execute(mode, testmode)
 
