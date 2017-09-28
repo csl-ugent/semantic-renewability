@@ -17,7 +17,7 @@ import executor.executor as executor
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
-def main(mode, regression_seed, testmode):
+def main(mode, regression, seed, testmode):
     logging.debug('Executing...')
 
     # First we read and parse the config file.
@@ -34,8 +34,8 @@ def main(mode, regression_seed, testmode):
     output_dir_config = config_obj.default['output_directory']
     shutil.rmtree(output_dir_config, True)
     while True:
-        if regression_seed:
-            config_obj.semantic_mod['seed'] = str(regression_seed)
+        if regression or seed:
+            config_obj.semantic_mod['seed'] = str(seed)
 
         # For every item we will execute an executor flow.
         for number in numbers:
@@ -43,7 +43,7 @@ def main(mode, regression_seed, testmode):
             config_obj.default['nr_of_versions'] = number
 
             # Set and create the output directory
-            output_dir = os.path.join(output_dir_config, str(regression_seed) if regression_seed else '', str(number) if len(numbers) > 1 else '')
+            output_dir = os.path.join(output_dir_config, str(seed) if regression else '', str(number) if len(numbers) > 1 else '')
             config_obj.default['output_directory'] = output_dir
             shutil.rmtree(output_dir, True)
             os.makedirs(output_dir)
@@ -53,8 +53,8 @@ def main(mode, regression_seed, testmode):
 
             # If we're regression testing, we need to do some work to figure out whether
             # execution was successful or not. The result is then appended to the regression log.
-            if regression_seed:
-                print('************************ Executing for seed ' + str(regression_seed) + ' **********************')
+            if regression:
+                print('************************ Executing for seed ' + str(seed) + ' **********************')
                 try:
                     result = True
                     executor_flow.execute(mode, testmode)
@@ -66,13 +66,13 @@ def main(mode, regression_seed, testmode):
                     pass
 
                 # Output result
-                print('************************ Result for seed ' + str(regression_seed) + ': ' + str(result) + ' ************************')
+                print('************************ Result for seed ' + str(seed) + ': ' + str(result) + ' ************************')
                 print()
             else:
                 executor_flow.execute(mode, testmode)
 
-        if regression_seed:
-            regression_seed = regression_seed +1
+        if regression:
+            seed = seed +1
         else:
             break
 
@@ -82,7 +82,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debugging log.')
     parser.add_argument('-m', '--mode', type=int, default=2, help='The mode in which the framework is to be executed.')
-    parser.add_argument('-r', '--regression', type=int, default=0, help='This mode starts regression testing with the seed that was passed.')
+    parser.add_argument('-r', '--regression', action='store_true', help='Start regression testing.')
+    parser.add_argument('-s', '--seed', type=int, default=0, help='The seed.')
     parser.add_argument('-t', '--testmode', type=int, default=0, help='The mode in which testing is to happen. 0 is no testing.')
     args = parser.parse_args()
 
@@ -98,4 +99,4 @@ if __name__ == '__main__':
         rootLogger.addHandler(fileHandler)
 
     # Start the execution.
-    main(args.mode, args.regression, args.testmode)
+    main(args.mode, args.regression, args.seed, args.testmode)
