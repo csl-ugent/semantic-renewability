@@ -19,6 +19,23 @@ class ARMDiabloLinuxObjdump:
         :param binaries: the binaries to compare.
         :return: True if the binaries are all the same, False if they are not.
         """
+
+        # A function to clean disassembly lines so irrelevant information (that might differ
+        # between versions however) is filtered out
+        def clean(line):
+            # Remove everything that comes after a semicolon
+            semicolon = line.find(';')
+            if semicolon != -1:
+                line = line[:semicolon]
+
+            # Remove everything between angular brackets
+            lb = line.find('<')
+            rb = line.find('>')
+            if lb != -1 and rb != -1:
+                line = line[:lb +1] + line[rb:]
+
+            return line
+
         # Get all the contents in binary
         dumps = []
         for binary in binaries:
@@ -33,9 +50,9 @@ class ARMDiabloLinuxObjdump:
                     output = subprocess.check_output([self.bin_location, '--disassemble', '--section=' + section_name, binary], universal_newlines=True)
 
                     # Filter the disassembly by removing the file name, the .word instructions,
-                    # and the DIABLO_UNIQUE_GOT_USE symbols (that also contain the path)
+                    # and cleaning the line
                     lines = output[output.find('Disassembly'):].splitlines()
-                    lines = [line for line in lines if '.word' not in line and 'DIABLO_UNIQUE_GOT_USE' not in line]
+                    lines = [clean(line) for line in lines if '.word' not in line]
                     sections[idx] = '\n'.join(lines)
 
             dumps.append(''.join(sections))
