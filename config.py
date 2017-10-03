@@ -11,7 +11,6 @@ class Config:
 
         # We define the relevant instance attributes.
         self.default = dict()
-        self.rethinkdb = dict()
         self.testing = dict()
         self.semantic_mod = dict()
         self.arm_diablo_linux_gcc = dict()
@@ -38,16 +37,6 @@ class Config:
         self.default['suffix_source'] = config_file.get("DEFAULT", "SuffixSource")
         self.default['suffix_header'] = config_file.get("DEFAULT", "SuffixHeader")
         self.default['nr_of_versions'] = config_file.get("DEFAULT", "NrOfVersions")
-
-        # Parsing the RETHINKDB section.
-        logging.debug("Parsing the RETHINKDB section...")
-        self.rethinkdb['host'] = config_file.get("RETHINKDB", "Host")
-        self.rethinkdb['port'] = config_file.get("RETHINKDB", "Port")
-        self.rethinkdb['database'] = config_file.get("RETHINKDB", "Database")
-        self.rethinkdb['table_experiments'] = config_file.get("RETHINKDB", "TableExperiments")
-        self.rethinkdb['table_analytics'] = config_file.get("RETHINKDB", "TableAnalytics")
-        self.rethinkdb['table_transformations'] = config_file.get("RETHINKDB", "TableTransformations")
-        self.rethinkdb['table_tests'] = config_file.get("RETHINKDB", "TableTests")
 
         # Parsing the TESTING section.
         logging.debug("Parsing the TESTING section...")

@@ -5,7 +5,6 @@ import subprocess
 
 import core.file as file
 import core.parser as parser
-import core.rethinkdb as rethinkdb
 import core.sections as sections
 import core.spec as spec
 import core.templates as templates
@@ -29,9 +28,6 @@ class Executor:
         :return: nothing.
         """
         self.config = config
-
-        # We create an instantiation of the rethinkdb.
-        self.rethinkdb_ = rethinkdb.RethinkDB(self.config.rethinkdb['host'], self.config.rethinkdb['port'], self.config.rethinkdb['database'])
 
         # We create an instantiation of the ARM diablo linux gcc.
         self.compiler = arm_diablo_linux_gcc.ARMDiabloLinuxGCC(self.config.arm_diablo_linux_gcc['bin_location'])
@@ -154,9 +150,6 @@ class Executor:
 
         analytics['functions'] = function_data
 
-        # Store the analytics information into the rethinkdb.
-        self.rethinkdb_.add_analytics(self.config.rethinkdb['table_analytics'], self.experiment_id, analytics)
-
         # Transform the set of differing function tuples to a list of function names. There is a loss
         # of accuracy here, as the object file the function is actually from is discarded. This reflects
         # how annotations in Diablo will also simply match on function name, and not take the originating
@@ -216,10 +209,6 @@ class Executor:
         # We apply the semantic modification tool for source to source transformations.
         print('************ Running semantic-mod tool **********')
         generated_versions = self.execute_semantic_mod(source_files, self.config.semantic_mod['type'])
-
-        # We create a new entry in the 'experiments' table of the rethinkdb.
-        self.experiment_id = self.rethinkdb_.add_experiment(self.config.rethinkdb['table_experiments'])
-        logging.debug("Experiment id: " + self.experiment_id)
 
         # Gather all version information
         print('************ Gathering version information **********')
@@ -290,13 +279,6 @@ class Executor:
 
             # List of absolute paths to section files in the object files directory.
             version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".sections")
-
-            # We read the generated transformation.json file and add the information to the rethinkdb.
-            transformation_id = self.rethinkdb_.add_transformation(self.config.rethinkdb['table_transformations'],
-                                                              self.experiment_id,
-                                                              version,
-                                                              file.read_json(os.path.join(version_dict["version_directory"], 'transformations.json')))
-            logging.debug("Transformation id: " + transformation_id)
 
             # The first step is to compile all source files into object files in the analysis directory
             self.compiler.create_object_files(self.config.actc['common_options'] + self.config.actc['preprocessor_flags'] + self.config.actc['compiler_flags'], version_dict["source_files"], version_dict["object_files"])
@@ -428,10 +410,3 @@ class Executor:
                 test_dir = os.path.join(testing_directory, version)
                 os.makedirs(test_dir)
                 spec.test(os.path.join(binary_dir, self.config.default['binary_name']), test_dir, self.config)
-
-            # We add test related data to the rethinkdb.
-            test_id = self.rethinkdb_.add_test(self.config.rethinkdb['table_tests'],
-                                          self.experiment_id,
-                                          version,
-                                          file.read_json(os.path.join(testing_directory, version + ".json")) if mode == 1 else None)
-            logging.debug("Test id: " + test_id)
