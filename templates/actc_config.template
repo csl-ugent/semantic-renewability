@@ -249,7 +249,7 @@
       "_01": {{
         "excluded": false,
         "options" : "",
-        "script" : "/projects/actc-demos/bzip2-1.0.6/actc/create_profile_on_board.sh"
+        "script" : ""
       }},
 
       // recompile using execution profile and calculate dynamic metrics
