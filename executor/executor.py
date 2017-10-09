@@ -252,41 +252,24 @@ class Executor:
         # We build a dictionary containing all relevant information of the current version.
         version_information = dict()
         for version in generated_versions:
-            # Create dictionary for this specific version.
+            # Create dictionary for this specific version. Get some paths and make directories.
             version_dict = version_information[version] = dict()
-
-            # The location of the generated source files of this version.
-            version_dict["version_directory"] = os.path.join(self.config.default['output_directory'], version)
-
-            # The location that will be used for version related analysis.
             version_dict["analysis_directory"] = os.path.join(self.config.default['output_directory'], version + "_analysis")
-
-            # The directory within the analysis directory that will be used to store compiled source files.
-            version_dict["object_files_directory"] = os.path.join(version_dict["analysis_directory"], "objfiles")
-
-            # List of absolute paths to source files of this specific version.
+            version_dict["version_directory"] = os.path.join(self.config.default['output_directory'], version)
             version_dict["source_files"] = file.get_files_with_suffix(version_dict["version_directory"], [self.config.default['suffix_source']])
 
-            # List of absolute paths to the object files in the object files directory.
-            version_dict["object_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"],
-                                                                ".o")
-
-            # List of absolute paths to the disassembled files in the object files directory.
-            version_dict["diss_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], "_diss.out")
-
-            # List of absolute paths to ELF files in the object files directory.
-            version_dict["elf_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".elf")
-
-            # List of absolute paths to section files in the object files directory.
-            version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".sections")
-
             # The first step is to compile all source files into object files in the analysis directory
+            version_dict["object_files_directory"] = os.path.join(version_dict["analysis_directory"], "objfiles")
+            version_dict["object_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".o")
             self.compiler.create_object_files(self.config.actc['common_options'] + self.config.actc['preprocessor_flags'] + self.config.actc['compiler_flags'], version_dict["source_files"], version_dict["object_files"])
 
-            # We disassemble the generated object files (for DEBUGGING purposes ONLY!)
-            self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"], version_dict["object_files"], version_dict["diss_files"])
+            # Generate paths for the analysis files we will generate from the object files.
+            version_dict["diss_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], "_diss.out")
+            version_dict["elf_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".elf")
+            version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".sections")
 
-            # We dump all relevant section information using readelf.
+            # We disassemble the generated object files (for DEBUGGING purposes ONLY!), and dump all relevant section information using readelf.
+            self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"], version_dict["object_files"], version_dict["diss_files"])
             self.elf_reader.read_files(self.config.elf_reader["base_flags"], version_dict["object_files"], version_dict["elf_files"])
 
             # We use a custom parser to parse all relevant code (.text) sections
