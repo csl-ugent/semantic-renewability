@@ -31,6 +31,15 @@ class ACTC:
         # Execute the command.
         subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
+    def get_build_dir(self, name):
+        """
+        Method used to get the path to the build directory.
+        :param name: the name for the ACTC config.
+        :return: path to the ACTC build directory.
+        """
+
+        return os.path.join(self.path, 'build', name)
+
     def get_mobile_blocks_dir(self, name):
         """
         Method used to get the path to the mobile blocks directory.
@@ -47,4 +56,4 @@ class ACTC:
         :return: path to the ACTC output directory.
         """
 
-        return os.path.join(self.path, 'build', name, 'BC05')
+        return os.path.join(self.get_build_dir(name), 'BC05')
