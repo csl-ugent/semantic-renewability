@@ -256,17 +256,22 @@ class Executor:
             version_dict = version_information[version] = dict()
             version_dict["analysis_directory"] = os.path.join(self.config.default['output_directory'], version + "_analysis")
             version_dict["version_directory"] = os.path.join(self.config.default['output_directory'], version)
-            version_dict["source_files"] = file.get_files_with_suffix(version_dict["version_directory"], [self.config.default['suffix_source']])
 
-            # The first step is to compile all source files into object files in the analysis directory
+            # The first step is to compile all source files into object files in the analysis directory.
+            # We compile the source files through a symlink to increase uniformity between
+            # the versions and avoid cause data differences between versions because of __FILE__.
+            compile_dir = os.path.join(self.config.default['output_directory'], 'uniform_compilation')
+            os.symlink(version_dict["version_directory"], compile_dir)
+            version_dict["source_files"] = file.get_files_with_suffix(compile_dir, [self.config.default['suffix_source']])
             version_dict["object_files_directory"] = os.path.join(version_dict["analysis_directory"], "objfiles")
-            version_dict["object_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".o")
+            version_dict["object_files"] = file.create_output_paths(version_dict["source_files"], compile_dir, version_dict["object_files_directory"], ".o")
             self.compiler.create_object_files(self.config.actc['common_options'] + self.config.actc['preprocessor_flags'] + self.config.actc['compiler_flags'], version_dict["source_files"], version_dict["object_files"])
 
             # Generate paths for the analysis files we will generate from the object files.
-            version_dict["diss_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], "_diss.out")
-            version_dict["elf_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".elf")
-            version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], version_dict["version_directory"], version_dict["object_files_directory"], ".sections")
+            version_dict["diss_files"] = file.create_output_paths(version_dict["source_files"], compile_dir, version_dict["object_files_directory"], "_diss.out")
+            version_dict["elf_files"] = file.create_output_paths(version_dict["source_files"], compile_dir, version_dict["object_files_directory"], ".elf")
+            version_dict["section_files"] = file.create_output_paths(version_dict["source_files"], compile_dir, version_dict["object_files_directory"], ".sections")
+            os.remove(compile_dir)
 
             # We disassemble the generated object files (for DEBUGGING purposes ONLY!), and dump all relevant section information using readelf.
             self.objdump.disassemble_obj_files(self.config.arm_diablo_linux_objdump["base_flags"], version_dict["object_files"], version_dict["diss_files"])
@@ -328,8 +333,8 @@ class Executor:
 
         # We will generate ACTC config files for each of the generated versions.
         for version in generated_versions:
-
-            actc_config = os.path.join(self.actc_.path, version + '.json')
+            actc_config = os.path.join(self.actc_.path, 'actc.json')
+            actual_actc_config = os.path.join(self.actc_.path, version + '.json')
             version_information[version]['actc_config'] = actc_config
 
             # We need to get all source and header files.
@@ -355,6 +360,13 @@ class Executor:
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.
             self.actc_.execute(actc_config, 'clean')
             self.actc_.execute(actc_config, 'build')
+
+            # For all versions we run the ACTC in the same path to avoid any differences in the binary
+            # because of __FILE__ being filled in. After running the ACTC we do some renaming to keep
+            # the actual ACTC build directory and config around.
+            os.rename(self.actc_.get_build_dir('actc'), self.actc_.get_build_dir(version))
+            os.rename(actc_config, actual_actc_config)
+            version_information[version]['actc_config'] = actual_actc_config
 
     def test(self, generated_versions, mode):
         # We set up the testing environment locally
