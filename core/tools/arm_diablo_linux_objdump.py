@@ -54,6 +54,9 @@ class ARMDiabloLinuxObjdump:
                     lines = output[output.find('Disassembly'):].splitlines()
                     lines = [clean(line) for line in lines if '.word' not in line]
                     sections[idx] = '\n'.join(lines)
+                if sec.startswith('.dynsym'):
+                    # The contents of this section can differ (function size). TODO: Actually interpret this data and simply compare the relevant parts.
+                    sections[idx] = ''
 
             dumps.append(''.join(sections))
 
