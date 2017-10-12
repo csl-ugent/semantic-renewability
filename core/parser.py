@@ -63,7 +63,7 @@ def data_section_extracter(line):
     :param line: the current line in the file.
     :return: a list of relevant function sections.
     """
-    result = re.search('([^ ]*\.(data|rodata)\.[^ \n]*)', line)
+    result = re.search('([^ ]*\.data\.[^ \n]*)', line)
     if result is not None:
         return result.group(0)
 
