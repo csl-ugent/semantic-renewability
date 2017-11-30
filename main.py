@@ -10,6 +10,7 @@ import configparser
 import logging
 import os
 import shutil
+import sys
 import traceback
 
 import executor.executor as executor
@@ -19,6 +20,9 @@ DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\
 
 def main(mode, regression, seed, testmode):
     logging.debug('Executing...')
+
+    # Change the directory
+    os.chdir(os.path.dirname(sys.argv[0]))
 
     # First we read and parse the config file.
     config_file = configparser.ConfigParser()
