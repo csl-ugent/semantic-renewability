@@ -390,6 +390,7 @@ class Executor:
         for version in generated_versions:
             # We generate the paths for the binary and the mobile blocks (which can be from different versions).
             binary_dir = self.actc_.get_output_dir(version)
+            binary = os.path.join(binary_dir, self.config.default['binary_name'])
             mobile_blocks_dir = self.actc_.get_mobile_blocks_dir(version)
             logging.debug('Testing version ' + version + '.')
 
@@ -400,8 +401,8 @@ class Executor:
 
             # Do the actual test, using either our own script or the SPEC functionality
             if mode == 1:
-                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary_dir, version, testing_directory])
+                subprocess.check_call([os.path.join(testing_dir, 'test_version.sh'), test_host, binary, version, testing_directory])
             elif mode == 2:
                 test_dir = os.path.join(testing_directory, version)
                 os.makedirs(test_dir)
-                spec.test(os.path.join(binary_dir, self.config.default['binary_name']), test_dir, self.config)
+                spec.test(binary, test_dir, self.config)

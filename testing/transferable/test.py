@@ -31,7 +31,7 @@ def perform_tests(testing):
 
         # We generate the command to be executed.
         with open('stdout', 'w') as f_out, open('stderr', 'w') as f_err:
-            ret_code = subprocess.call(['/usr/bin/time', '-f', '%e, %U, %S', './d.out'] + inputs, stdout=f_out, stderr=f_err)
+            ret_code = subprocess.call(['/usr/bin/time', '-f', '%e, %U, %S', './binary'] + inputs, stdout=f_out, stderr=f_err)
 
         with open('stdout', 'r') as f_out, open('stderr', 'r') as f_err:
             stdout = f_out.read()
