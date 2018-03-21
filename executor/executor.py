@@ -210,6 +210,10 @@ class Executor:
         print('************ Running semantic-mod tool **********')
         generated_versions = self.execute_semantic_mod(source_files, self.config.semantic_mod['type'])
 
+        if not generated_versions:
+            print('************ No versions generated! **********')
+            return
+
         # Gather all version information
         print('************ Gathering version information **********')
         version_information = self.gather_version_information(generated_versions)
