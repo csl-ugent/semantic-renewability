@@ -5,12 +5,12 @@ import json
 import logging
 import os
 import subprocess
+import sys
 
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
 def perform_tests(testing):
-
     # Dictionary used to store all relevant test data.
     data = dict()
     data['results'] = []
@@ -66,38 +66,7 @@ def perform_tests(testing):
         # We add the data entry to the results
         data['results'].append(data_entry)
 
-    # We dump the results in json format.
-    with open('results.json', 'w') as f:
-        json.dump(data, f, ensure_ascii=False)
-
-
-def main(config_file_path, exec_dir):
-    logging.debug("Executing...")
-
-    # First we read the config file.
-    config_file = configparser.ConfigParser()
-    config_file.read(config_file_path)
-
-    # We parse the config file into a custom config object.
-    testing = dict()
-    input_output = json.loads(config_file.get("TESTING", "InputOutput"))
-
-    # Parse the input/output pairs.
-    pairs = []
-    for pair in input_output:
-        inputs = pair[pair.find('[') +1 : pair.find(']')]
-        inputs = inputs.split(',') if inputs else []
-        output = pair[pair.find('\'') +1:pair.rfind('\'')]
-
-        pairs.append((inputs, output))
-
-    # We set the input/output pairs in the dictionary.
-    testing['input_output'] = pairs
-
-    # We start the testing flow.
-    os.chdir(exec_dir)
-    perform_tests(testing)
-
+    return data, data_entry['correct']
 
 if __name__ == '__main__':
     # Parsing the arguments
@@ -117,4 +86,35 @@ if __name__ == '__main__':
         fileHandler.setFormatter(logFormatter)
         rootLogger.addHandler(fileHandler)
 
-    main(args.config_file, args.exec_dir)
+    logging.debug("Executing...")
+
+    # First we read the config file.
+    config_file = configparser.ConfigParser()
+    config_file.read(args.config_file)
+
+    # We parse the config file into a custom config object.
+    testing = dict()
+    input_output = json.loads(config_file.get("TESTING", "InputOutput"))
+
+    # Parse the input/output pairs.
+    pairs = []
+    for pair in input_output:
+        inputs = pair[pair.find('[') +1 : pair.find(']')]
+        inputs = inputs.split(',') if inputs else []
+        output = pair[pair.find('\'') +1:pair.rfind('\'')]
+
+        pairs.append((inputs, output))
+
+    # We set the input/output pairs in the dictionary.
+    testing['input_output'] = pairs
+
+    # We start the testing flow.
+    os.chdir(args.exec_dir)
+    results, success = perform_tests(testing)
+
+    # We dump the results in json format.
+    with open('results.json', 'w') as f:
+        json.dump(results, f, ensure_ascii=False)
+
+    # Exit with status
+    sys.exit(0 if success else 1)

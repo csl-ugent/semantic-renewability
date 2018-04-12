@@ -15,9 +15,12 @@ dst_dir="~/automatic_tests/$version_name"
 ssh $host "mkdir -p $dst_dir"
 scp $binary $host:$dst_dir/binary
 
-# Execute testing framework
-ssh $host "~/automatic_tests/testing/test.py ~/automatic_tests/testing/config.ini $dst_dir"
+# Execute testing framework, capture the return code
+ssh $host "~/automatic_tests/testing/test.py ~/automatic_tests/testing/config.ini $dst_dir" && rc=$? || rc=$?
 
 # Copy back files
 scp $host:$dst_dir/results.json $results_dir/$version_name.json
 scp $host:$dst_dir/debug.log $results_dir/debug_$version_name.log
+
+# Exit with the return code of the testing framework
+exit $rc
