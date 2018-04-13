@@ -363,7 +363,7 @@ class Executor:
 
             # Now we will employ the ACTC using our mobile block annotations and actc configuration file.
             self.actc_.clean(actc_config)
-            self.actc_.execute(actc_config)
+            self.actc_.execute(actc_config, version)
 
             # For all versions we run the ACTC in the same path to avoid any differences in the binary
             # because of __FILE__ being filled in. After running the ACTC we do some renaming to keep

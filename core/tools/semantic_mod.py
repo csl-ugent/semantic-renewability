@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 class SemanticMod:
@@ -30,4 +31,5 @@ class SemanticMod:
                        ['-od', output_directory] + extra_opts + ["--"] + self.compiler_flags
 
         # We execute the command.
-        subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        with open(os.path.join(output_directory, 'semantic_mod.log'), 'w') as f_log:
+            subprocess.check_call(command_exec, stdout=f_log, stderr=subprocess.STDOUT)

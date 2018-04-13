@@ -26,17 +26,19 @@ class ACTC:
         # Execute the command.
         subprocess.check_call([self.bin_location, '-f', config_file, 'clean'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
-    def execute(self, config_file):
+    def execute(self, config_file, name):
         """
         Method used to execute the actc tool.
         :param config_file: the absolute path to the config file that will be used by the ACTC
+        :param name: the name of the version to be generated.
         :return: nothing.
         """
         # Construct the ACTC command.
         command_exec = [self.bin_location, '--aidfixed', self.config['aid'], '-f', config_file, '-d', 'build']
 
         # Execute the command.
-        subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        with open(os.path.join(self.path, name + '.log'), 'w') as f_log:
+            subprocess.check_call(command_exec, stdout=f_log, stderr=subprocess.STDOUT)
 
     def get_build_dir(self, name):
         """
