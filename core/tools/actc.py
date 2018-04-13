@@ -1,7 +1,6 @@
 import os
 import subprocess
 
-
 class ACTC:
     """
     Class which represents the ACTC toolchain.
