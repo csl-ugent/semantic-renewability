@@ -17,15 +17,23 @@ class ACTC:
         self.config = config
         self.path = path
 
-    def execute(self, config_file, mode):
+    def clean(self, config_file):
+        """
+        Method used to clean previous executions of the actc tool.
+        :param config_file: the absolute path to the config file that will be used by the ACTC
+        :return: nothing.
+        """
+        # Execute the command.
+        subprocess.check_call([self.bin_location, '-f', config_file, 'clean'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+    def execute(self, config_file):
         """
         Method used to execute the actc tool.
         :param config_file: the absolute path to the config file that will be used by the ACTC
-        :param mode: the mode of ACTC (e.g. 'build' or 'clean').
-        :return: status of the tool.
+        :return: nothing.
         """
         # Construct the ACTC command.
-        command_exec = [self.bin_location, '--aidfixed', self.config['aid'], '-f', config_file, '-d', mode]
+        command_exec = [self.bin_location, '--aidfixed', self.config['aid'], '-f', config_file, '-d', 'build']
 
         # Execute the command.
         subprocess.check_call(command_exec, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
