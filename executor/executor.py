@@ -155,7 +155,7 @@ class Executor:
         # how annotations in Diablo will also simply match on function name, and not take the originating
         # object file into account.
         functions_diff = list(functions_diff)
-        functions_diff = [function for (function, object_file) in functions_diff]
+        functions_diff = sorted([function for (function, object_file) in functions_diff])
 
         # Debug
         logging.debug("Functions considered different: " + str(functions_diff))
