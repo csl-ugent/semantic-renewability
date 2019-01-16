@@ -29,7 +29,7 @@ def main(mode, regression, seed, testmode):
     config_file.read('config.ini')
     config_obj = config.Config(config_file)
 
-    # Conver the nr_of_versions option into a list of numbers
+    # Convert the nr_of_versions option into a list of numbers
     numbers = [x for x in config_obj.default['nr_of_versions'].split(',')]
 
     # If regression was requested we start at the specified seed and increment it every loop.
