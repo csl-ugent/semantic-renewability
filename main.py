@@ -18,7 +18,7 @@ import executor.executor as executor
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
-def main(mode, number_of_seeds, seed, testmode):
+def main(mode, number_of_seeds, numbers_of_versions, seed, testmode):
     logging.debug('Executing...')
 
     # Change the directory
@@ -29,8 +29,9 @@ def main(mode, number_of_seeds, seed, testmode):
     config_file.read('config.ini')
     config_obj = config.Config(config_file)
 
-    # Convert the nr_of_versions option into a list of numbers
-    numbers_of_versions = [x for x in config_obj.default['nr_of_versions'].split(',')]
+    # Convert the nr_of_versions option or argument into a list of numbers
+    numbers_of_versions = numbers_of_versions if numbers_of_versions else config_obj.default['nr_of_versions']
+    numbers_of_versions = [x for x in numbers_of_versions.split(',')]
 
     # If multiple seeds were requested we start at the first seed and continue until we have
     # the number of requested seeds. Every run is saved to a separate directory. The starting
@@ -79,9 +80,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debugging log.')
     parser.add_argument('-m', '--mode', type=int, default=2, help='The mode in which the framework is to be executed.')
-    parser.add_argument('-n', '--number_of_seeds', type=int, default=0, help='The number of seeds to test.')
-    parser.add_argument('-s', '--seed', type=int, default=0, help='The seed.')
+    parser.add_argument('-n', '--number_of_seeds', type=int, help='The number of seeds to test.')
+    parser.add_argument('-s', '--seed', type=int, help='The seed.')
     parser.add_argument('-t', '--testmode', type=int, default=0, help='The mode in which testing is to happen. 0 is no testing.')
+    parser.add_argument('-v', '--numbers_of_versions', type=str, help='The numbers of versions to test.')
     args = parser.parse_args()
 
     # Check if DEBUG mode is on or not.
@@ -96,4 +98,4 @@ if __name__ == '__main__':
         rootLogger.addHandler(fileHandler)
 
     # Start the execution.
-    main(args.mode, args.number_of_seeds, args.seed, args.testmode)
+    main(args.mode, args.number_of_seeds, args.numbers_of_versions, args.seed, args.testmode)
