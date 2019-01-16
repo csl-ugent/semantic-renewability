@@ -18,7 +18,7 @@ import executor.executor as executor
 # Debugging format.
 DEBUG_FORMAT = '%(levelname)s:%(filename)s:%(funcName)s:%(asctime)s %(message)s\n'
 
-def main(mode, number_of_seeds, numbers_of_versions, seed, testmode):
+def main(mode, number_of_seeds, numbers_of_versions, seed, testmode, transformation_type):
     logging.debug('Executing...')
 
     # Change the directory
@@ -28,6 +28,9 @@ def main(mode, number_of_seeds, numbers_of_versions, seed, testmode):
     config_file = configparser.ConfigParser()
     config_file.read('config.ini')
     config_obj = config.Config(config_file)
+
+    if transformation_type:
+        config_obj.semantic_mod['type'] = transformation_type
 
     # Convert the nr_of_versions option or argument into a list of numbers
     numbers_of_versions = numbers_of_versions if numbers_of_versions else config_obj.default['nr_of_versions']
@@ -84,6 +87,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--seed', type=int, help='The seed.')
     parser.add_argument('-t', '--testmode', type=int, default=0, help='The mode in which testing is to happen. 0 is no testing.')
     parser.add_argument('-v', '--numbers_of_versions', type=str, help='The numbers of versions to test.')
+    parser.add_argument('-y', '--transformation_type', type=str, help='The type of transformation.')
     args = parser.parse_args()
 
     # Check if DEBUG mode is on or not.
@@ -98,4 +102,4 @@ if __name__ == '__main__':
         rootLogger.addHandler(fileHandler)
 
     # Start the execution.
-    main(args.mode, args.number_of_seeds, args.numbers_of_versions, args.seed, args.testmode)
+    main(args.mode, args.number_of_seeds, args.numbers_of_versions, args.seed, args.testmode, args.transformation_type)
