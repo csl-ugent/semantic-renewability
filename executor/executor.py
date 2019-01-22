@@ -203,6 +203,20 @@ class Executor:
         :return: nothing.
         """
 
+        if mode < 0:
+            # Do a base run, without any modifications/diversifications
+            version_information = dict()
+            version_information['base'] = dict()
+            version_information['base']['version_directory'] = self.config.default['input_source_directory']
+
+            if mode == -1:
+                print('************ Running ACTC without CM **********')
+                self.run_actc(['base'], version_information, set())
+            if mode == -2:
+                print('************ Running ACTC with CM **********')
+                self.run_actc(['base'], version_information, set('__________this_function_definitely_does_not_exist____________'))
+            return
+
         # Gather all the source files
         source_files = file.get_files_with_suffix(self.config.default['input_source_directory'], [self.config.default['suffix_source']])
 
